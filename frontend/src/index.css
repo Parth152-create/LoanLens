@@ -1,3 +1,270 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Google Fonts ──────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
+/* ─── CSS Variables ─────────────────────────────────────────── */
+:root {
+  /* Shared */
+  --transition-theme: 0.4s ease;
+
+  /* Dark theme (default) */
+  --bg-primary:    #0a0f1e;
+  --bg-secondary:  #0d1a2b;
+  --bg-surface:    #111d30;
+  --bg-card:       #13243a;
+  --bg-card-hover: #172b44;
+
+  --text-primary:   #e8f4f8;
+  --text-secondary: #8faabf;
+  --text-muted:     #4d6a80;
+
+  --accent-1: #0ea5e9;   /* sky blue  */
+  --accent-2: #14b8a6;   /* teal      */
+  --accent-3: #6366f1;   /* indigo    */
+
+  --border:        rgba(14, 165, 233, 0.15);
+  --border-strong: rgba(14, 165, 233, 0.30);
+
+  --grad-bg: linear-gradient(135deg, #0a0f1e 0%, #0d2137 50%, #0a1e1c 100%);
+  --grad-accent: linear-gradient(135deg, #0ea5e9, #14b8a6);
+  --grad-danger:  linear-gradient(135deg, #ef4444, #f97316);
+  --grad-success: linear-gradient(135deg, #10b981, #14b8a6);
+  --grad-warning: linear-gradient(135deg, #f59e0b, #eab308);
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(14, 165, 233, 0.2);
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+  --bg-primary:    #f0f7ff;
+  --bg-secondary:  #e6f4f8;
+  --bg-surface:    #ffffff;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #f8fdff;
+
+  --text-primary:   #0a1f33;
+  --text-secondary: #3d647d;
+  --text-muted:     #8faabf;
+
+  --accent-1: #0284c7;
+  --accent-2: #0d9488;
+  --accent-3: #4f46e5;
+
+  --border:        rgba(2, 132, 199, 0.15);
+  --border-strong: rgba(2, 132, 199, 0.30);
+
+  --grad-bg: linear-gradient(135deg, #e0f2fe 0%, #ecfdf5 60%, #dbeafe 100%);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+}
+
+/* ─── Base Reset ────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+/* ─── App Shell — gradient background with layered pseudo-els ── */
+body {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+
+  /* All color properties transition together */
+  transition:
+    background var(--transition-theme),
+    color var(--transition-theme);
+}
+
+/* Layered gradient overlay — dark layer */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--grad-bg);
+  opacity: 1;
+  transition: opacity var(--transition-theme);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Light gradient fades in on top when switching to light */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #e0f2fe 0%, #ecfdf5 60%, #dbeafe 100%);
+  opacity: 0;
+  transition: opacity var(--transition-theme);
+  pointer-events: none;
+  z-index: -1;
+}
+
+[data-theme="light"] body::before {
+  opacity: 0;
+}
+[data-theme="light"] body::after {
+  opacity: 1;
+}
+
+/* ─── Typography ────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Syne', sans-serif;
+  color: var(--text-primary);
+  transition: color var(--transition-theme);
+}
+
+p, span, label, li {
+  color: var(--text-secondary);
+  transition: color var(--transition-theme);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb {
+  background: var(--accent-2);
+  border-radius: 99px;
+  opacity: 0.5;
+}
+
+/* ─── Utility Classes ───────────────────────────────────────── */
+
+/* Cards */
+.ll-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  transition:
+    background var(--transition-theme),
+    border-color var(--transition-theme),
+    box-shadow var(--transition-theme);
+}
+
+.ll-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Gradient accent text */
+.ll-gradient-text {
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Accent button */
+.ll-btn-accent {
+  background: var(--grad-accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.ll-btn-accent:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.ll-btn-accent:active {
+  transform: translateY(0);
+}
+
+/* Ghost button */
+.ll-btn-ghost {
+  background: transparent;
+  color: var(--accent-1);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0.65rem 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.15s;
+}
+.ll-btn-ghost:hover {
+  background: var(--border);
+  border-color: var(--accent-1);
+  transform: translateY(-1px);
+}
+
+/* Input fields */
+.ll-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  padding: 0.65rem 1rem;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    background var(--transition-theme),
+    color var(--transition-theme),
+    box-shadow 0.2s;
+}
+.ll-input:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+.ll-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Badge */
+.ll-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Divider */
+.ll-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  transition: border-color var(--transition-theme);
+}
+
+/* Section label */
+.ll-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color var(--transition-theme);
+}
+
+/* ─── Sidebar width token ───────────────────────────────────── */
+:root {
+  --sidebar-w: 240px;
+}
