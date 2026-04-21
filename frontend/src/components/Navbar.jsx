@@ -3,12 +3,49 @@ import { motion } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+function LoanLensIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Outer lens circle */}
+      <circle cx="16" cy="16" r="15" stroke="url(#grad)" strokeWidth="1.5" fill="none" opacity="0.4" />
+      {/* Inner lens shape — two intersecting arcs */}
+      <path
+        d="M10 16 C10 11.5 13 8.5 16 8 C19 8.5 22 11.5 22 16 C22 20.5 19 23.5 16 24 C13 23.5 10 20.5 10 16Z"
+        fill="url(#grad)"
+        opacity="0.15"
+      />
+      <path
+        d="M10 16 C10 11.5 13 8.5 16 8 C19 8.5 22 11.5 22 16 C22 20.5 19 23.5 16 24 C13 23.5 10 20.5 10 16Z"
+        stroke="url(#grad)"
+        strokeWidth="1.5"
+        fill="none"
+      />
+      {/* Trend line through lens */}
+      <polyline
+        points="11,19 14,15 17,17 21,12"
+        stroke="url(#grad)"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Centre dot */}
+      <circle cx="16" cy="16" r="1.5" fill="url(#grad)" />
+      <defs>
+        <linearGradient id="grad" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#2DD4BF" />
+          <stop offset="100%" stopColor="#6366F1" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
 
   const navLinks = [
-    { to: "/apply", label: "Apply" },
+    { to: "/apply",      label: "Apply"      },
     { to: "/my-history", label: "My History" },
   ];
 
@@ -36,42 +73,50 @@ export default function Navbar() {
           justifyContent: "space-between",
         }}
       >
-        {/* Logo */}
+        {/* ── Logo ── */}
         <Link
           to="/apply"
-          style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem" }}
+          style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.55rem" }}
         >
-          <span
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              background: "var(--grad-accent)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.85rem",
-              fontWeight: 800,
-              color: "#fff",
-              fontFamily: "'Syne', sans-serif",
-            }}
+          <motion.div
+            whileHover={{ rotate: 8, scale: 1.08 }}
+            transition={{ type: "spring", stiffness: 300, damping: 18 }}
           >
-            L
-          </span>
-          <span
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.05rem",
-              color: "var(--text-primary)",
-              transition: "color var(--transition-theme)",
-            }}
-          >
-            LoanLens
+            <LoanLensIcon />
+          </motion.div>
+
+          {/* Wordmark */}
+          <span style={{ display: "flex", alignItems: "baseline", gap: "0px" }}>
+            <span
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "1.1rem",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #6366F1 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Loan
+            </span>
+            <span
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "1.1rem",
+                color: "var(--text-primary)",
+                letterSpacing: "-0.01em",
+                transition: "color var(--transition-theme)",
+              }}
+            >
+              Lens
+            </span>
           </span>
         </Link>
 
-        {/* Nav links + theme toggle */}
+        {/* ── Nav links + theme toggle ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
           {navLinks.map(({ to, label }) => {
             const active = pathname === to;
@@ -96,14 +141,7 @@ export default function Navbar() {
           })}
 
           {/* Divider */}
-          <div
-            style={{
-              width: 1,
-              height: 20,
-              background: "var(--border)",
-              margin: "0 0.5rem",
-            }}
-          />
+          <div style={{ width: 1, height: 20, background: "var(--border)", margin: "0 0.5rem" }} />
 
           {/* Theme toggle */}
           <motion.button

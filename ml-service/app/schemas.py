@@ -1,5 +1,6 @@
 # ml-service/app/schemas.py
 from pydantic import BaseModel
+from typing import Dict
 
 class LoanRequest(BaseModel):
     revolving_utilization: float
@@ -17,3 +18,4 @@ class PredictionResponse(BaseModel):
     default_probability: float
     risk_tier: str
     message: str
+    shap_values: Dict[str, float]  # ← new

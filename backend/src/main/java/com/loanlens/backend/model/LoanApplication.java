@@ -1,7 +1,11 @@
 package com.loanlens.backend.model;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
 import java.time.LocalDateTime;
+import java.util.Map;
+
 
 @Entity
 @Table(name = "loan_applications")
@@ -26,6 +30,10 @@ public class LoanApplication {
     private double defaultProbability;
     private String riskTier;
     private String message;
+
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Double> shapValues;
 
     private LocalDateTime createdAt;
 
@@ -63,6 +71,8 @@ public class LoanApplication {
     public void setRiskTier(String v) { this.riskTier = v; }
     public String getMessage() { return message; }
     public void setMessage(String v) { this.message = v; }
+    public Map<String, Double> getShapValues() { return shapValues; }
+    public void setShapValues(Map<String, Double> v) { this.shapValues = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
 }

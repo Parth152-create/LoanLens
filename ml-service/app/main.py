@@ -11,7 +11,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8081"],
+    allow_origins=["http://localhost:3000", "http://localhost:8081", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,11 +24,12 @@ def health_check():
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: LoanRequest):
     try:
-        probability, risk_tier = predict_default(request)
+        probability, risk_tier, shap_values = predict_default(request)  # ← unpack 3
         return PredictionResponse(
             default_probability=round(probability, 4),
             risk_tier=risk_tier,
-            message=f"{'Low' if risk_tier == 'LOW' else 'Moderate' if risk_tier == 'MEDIUM' else 'High'} risk of default."
+            message=f"{'Low' if risk_tier == 'LOW' else 'Moderate' if risk_tier == 'MEDIUM' else 'High'} risk of default.",
+            shap_values=shap_values,                                     # ← add
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

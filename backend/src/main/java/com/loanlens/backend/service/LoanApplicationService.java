@@ -59,6 +59,14 @@ public class LoanApplicationService {
         loan.setRiskTier((String) response.get("risk_tier"));
         loan.setMessage((String) response.get("message"));
 
+        @SuppressWarnings("unchecked")
+        Map<String, Object> rawShap = (Map<String, Object>) response.get("shap_values");
+        if (rawShap != null) {
+            Map<String, Double> shapValues = new HashMap<>();
+            rawShap.forEach((k, v) -> shapValues.put(k, ((Number) v).doubleValue()));
+            loan.setShapValues(shapValues);
+        }
+
         return repository.save(loan);
     }
 
