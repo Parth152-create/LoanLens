@@ -1,13 +1,74 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+@import "@fontsource-variable/geist";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── CSS Variables ─────────────────────────────────────────── */
+/* ─── shadcn CSS Variables ──────────────────────────────────── */
+@layer base {
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+  }
+
+  /* ── Safe reset — no @apply with custom tokens ── */
+  * {
+    border-color: transparent;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  html {
+    font-family: 'DM Sans', sans-serif;
+  }
+}
+
+/* ─── LoanLens CSS Variables ────────────────────────────────── */
 :root {
-  /* Shared */
   --transition-theme: 0.4s ease;
+  --sidebar-w: 240px;
 
   /* Dark theme (default) */
   --bg-primary:    #0a0f1e;
@@ -20,15 +81,15 @@
   --text-secondary: #8faabf;
   --text-muted:     #4d6a80;
 
-  --accent-1: #0ea5e9;   /* sky blue  */
-  --accent-2: #14b8a6;   /* teal      */
-  --accent-3: #6366f1;   /* indigo    */
+  --accent-1: #0ea5e9;
+  --accent-2: #14b8a6;
+  --accent-3: #6366f1;
 
-  --border:        rgba(14, 165, 233, 0.15);
-  --border-strong: rgba(14, 165, 233, 0.30);
+  --ll-border:        rgba(14, 165, 233, 0.15);
+  --ll-border-strong: rgba(14, 165, 233, 0.30);
 
-  --grad-bg: linear-gradient(135deg, #0a0f1e 0%, #0d2137 50%, #0a1e1c 100%);
-  --grad-accent: linear-gradient(135deg, #0ea5e9, #14b8a6);
+  --grad-bg:      linear-gradient(135deg, #0a0f1e 0%, #0d2137 50%, #0a1e1c 100%);
+  --grad-accent:  linear-gradient(135deg, #0ea5e9, #14b8a6);
   --grad-danger:  linear-gradient(135deg, #ef4444, #f97316);
   --grad-success: linear-gradient(135deg, #10b981, #14b8a6);
   --grad-warning: linear-gradient(135deg, #f59e0b, #eab308);
@@ -53,8 +114,8 @@
   --accent-2: #0d9488;
   --accent-3: #4f46e5;
 
-  --border:        rgba(2, 132, 199, 0.15);
-  --border-strong: rgba(2, 132, 199, 0.30);
+  --ll-border:        rgba(2, 132, 199, 0.15);
+  --ll-border-strong: rgba(2, 132, 199, 0.30);
 
   --grad-bg: linear-gradient(135deg, #e0f2fe 0%, #ecfdf5 60%, #dbeafe 100%);
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -74,19 +135,15 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ─── App Shell — gradient background with layered pseudo-els ── */
 body {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
-
-  /* All color properties transition together */
   transition:
     background var(--transition-theme),
     color var(--transition-theme);
 }
 
-/* Layered gradient overlay — dark layer */
 body::before {
   content: '';
   position: fixed;
@@ -98,7 +155,6 @@ body::before {
   z-index: -1;
 }
 
-/* Light gradient fades in on top when switching to light */
 body::after {
   content: '';
   position: fixed;
@@ -110,12 +166,8 @@ body::after {
   z-index: -1;
 }
 
-[data-theme="light"] body::before {
-  opacity: 0;
-}
-[data-theme="light"] body::after {
-  opacity: 1;
-}
+[data-theme="light"] body::before { opacity: 0; }
+[data-theme="light"] body::after  { opacity: 1; }
 
 /* ─── Typography ────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
@@ -138,12 +190,10 @@ p, span, label, li {
   opacity: 0.5;
 }
 
-/* ─── Utility Classes ───────────────────────────────────────── */
-
-/* Cards */
+/* ─── LoanLens Utility Classes ──────────────────────────────── */
 .ll-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-border);
   border-radius: 16px;
   box-shadow: var(--shadow-card);
   transition:
@@ -154,11 +204,10 @@ p, span, label, li {
 
 .ll-card:hover {
   background: var(--bg-card-hover);
-  border-color: var(--border-strong);
+  border-color: var(--ll-border-strong);
   box-shadow: var(--shadow-glow);
 }
 
-/* Gradient accent text */
 .ll-gradient-text {
   background: var(--grad-accent);
   -webkit-background-clip: text;
@@ -166,7 +215,6 @@ p, span, label, li {
   background-clip: text;
 }
 
-/* Accent button */
 .ll-btn-accent {
   background: var(--grad-accent);
   color: #fff;
@@ -179,62 +227,45 @@ p, span, label, li {
   cursor: pointer;
   transition: opacity 0.2s, transform 0.15s;
 }
-.ll-btn-accent:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-.ll-btn-accent:active {
-  transform: translateY(0);
-}
+.ll-btn-accent:hover  { opacity: 0.88; transform: translateY(-1px); }
+.ll-btn-accent:active { transform: translateY(0); }
 
-/* Ghost button */
 .ll-btn-ghost {
   background: transparent;
   color: var(--accent-1);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--ll-border-strong);
   border-radius: 10px;
   padding: 0.65rem 1.5rem;
   font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition:
-    background 0.2s,
-    border-color 0.2s,
-    transform 0.15s;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
 .ll-btn-ghost:hover {
-  background: var(--border);
+  background: var(--ll-border);
   border-color: var(--accent-1);
   transform: translateY(-1px);
 }
 
-/* Input fields */
 .ll-input {
   width: 100%;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--ll-border);
   border-radius: 10px;
   color: var(--text-primary);
   font-family: 'DM Sans', sans-serif;
   font-size: 0.95rem;
   padding: 0.65rem 1rem;
   outline: none;
-  transition:
-    border-color 0.2s,
-    background var(--transition-theme),
-    color var(--transition-theme),
-    box-shadow 0.2s;
+  transition: border-color 0.2s, background var(--transition-theme), color var(--transition-theme), box-shadow 0.2s;
 }
 .ll-input:focus {
   border-color: var(--accent-1);
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
 }
-.ll-input::placeholder {
-  color: var(--text-muted);
-}
+.ll-input::placeholder { color: var(--text-muted); }
 
-/* Badge */
 .ll-badge {
   display: inline-flex;
   align-items: center;
@@ -246,14 +277,12 @@ p, span, label, li {
   letter-spacing: 0.02em;
 }
 
-/* Divider */
 .ll-divider {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--ll-border);
   transition: border-color var(--transition-theme);
 }
 
-/* Section label */
 .ll-label {
   font-size: 0.72rem;
   font-weight: 700;
@@ -261,9 +290,4 @@ p, span, label, li {
   text-transform: uppercase;
   color: var(--text-muted);
   transition: color var(--transition-theme);
-}
-
-/* ─── Sidebar width token ───────────────────────────────────── */
-:root {
-  --sidebar-w: 240px;
 }

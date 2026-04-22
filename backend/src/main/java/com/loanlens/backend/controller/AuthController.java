@@ -1,9 +1,3 @@
-// ============================================================
-// FILE 7 OF 8 — Item 5: JWT Auth
-// LOCATION: /Users/parth/IdeaProjects/LoanLens/backend/src/main/java/com/loanlens/backend/controller/AuthController.java
-// ACTION: CREATE this file — it does not exist yet
-// ============================================================
-
 package com.loanlens.backend.controller;
 
 import com.loanlens.backend.model.User;
@@ -14,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -58,7 +53,11 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(username);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("token", token, "username", username, "role", role));
+                .body(Map.of(
+                        "token",    token,
+                        "username", username,
+                        "roles",    List.of(role)
+                ));
     }
 
     // ── POST /api/auth/login ──────────────────────────────────
@@ -75,7 +74,7 @@ public class AuthController {
                             Map.<String, Object>of(
                                     "token",    token,
                                     "username", username,
-                                    "role",     user.getRole()
+                                    "roles",    List.of(user.getRole())
                             )
                     );
                 })

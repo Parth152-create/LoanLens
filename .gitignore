@@ -18,3 +18,9 @@ target/
 
 # Model artifacts (use cloud storage in prod)
 ml-service/models/*.pkl
+.idea/
+.DS_Store
+**/.DS_Store
+__pycache__/
+ml-service/notebooks/cs-training.csv
+ml-service/models/*.pkl

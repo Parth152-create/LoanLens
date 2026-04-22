@@ -1,150 +1,99 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search,
-  Filter,
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw,
-  X,
-  AlertCircle,
-  FileText,
-  Download,
+  Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown,
+  ChevronLeft, ChevronRight, RefreshCw, X, AlertCircle, FileText, Download,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+
 import { getAllLoans } from "../../services/loanService";
 import RiskBadge from "../../components/RiskBadge";
 import VerdictChip from "../../components/VerdictChip";
 
-// ─── constants ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────
 const RISK_TIERS = ["ALL", "LOW", "MEDIUM", "HIGH"];
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
-
 const COLUMNS = [
-  { key: "id",                 label: "ID",         sortable: true,  width: "80px"  },
-  { key: "age",                label: "Age",        sortable: true,  width: "80px"  },
-  { key: "monthlyIncome",      label: "Income (₹)", sortable: true,  width: "130px" },
-  { key: "debtRatio",          label: "Debt Ratio", sortable: true,  width: "110px" },
-  { key: "riskTier",           label: "Risk",       sortable: true,  width: "100px" },
-  { key: "defaultProbability", label: "Default %",  sortable: true,  width: "110px" },
-  { key: "message",            label: "Verdict",    sortable: false, width: "160px" },
-  { key: "createdAt",          label: "Date",       sortable: true,  width: "140px" },
+  { key: "id",                 label: "ID",         sortable: true  },
+  { key: "age",                label: "Age",        sortable: true  },
+  { key: "monthlyIncome",      label: "Income",     sortable: true  },
+  { key: "debtRatio",          label: "Debt Ratio", sortable: true  },
+  { key: "riskTier",           label: "Risk",       sortable: true  },
+  { key: "defaultProbability", label: "Default %",  sortable: true  },
+  { key: "message",            label: "Verdict",    sortable: false },
+  { key: "createdAt",          label: "Date",       sortable: true  },
 ];
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+const TIER_COLORS = {
+  LOW:    { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.3)", color: "#10b981" },
+  MEDIUM: { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", color: "#f59e0b" },
+  HIGH:   { bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.3)",  color: "#ef4444" },
+  ALL:    { bg: "rgba(99,102,241,0.12)", border: "rgba(99,102,241,0.3)", color: "#6366f1" },
+};
+
 const fmt = {
-  currency: (n) =>
-    n == null ? "—" : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n),
-  percent: (n) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`),
-  date: (s) => {
+  currency: (n) => n == null ? "—" : `$${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n)}`,
+  percent:  (n) => n == null ? "—" : `${(n * 100).toFixed(1)}%`,
+  date:     (s) => {
     if (!s) return "—";
-    const d = new Date(s);
-    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    return new Date(s).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
   },
 };
 
+// ─── Sort Icon ────────────────────────────────────────────────
 function SortIcon({ column, sortKey, sortDir }) {
-  if (column !== sortKey)
-    return <ChevronsUpDown size={13} className="sort-icon muted" />;
+  if (column !== sortKey) return <ChevronsUpDown size={12} style={{ opacity: 0.3 }} />;
   return sortDir === "asc"
-    ? <ChevronUp size={13} className="sort-icon active" />
-    : <ChevronDown size={13} className="sort-icon active" />;
+    ? <ChevronUp size={12} style={{ color: "var(--accent-1)" }} />
+    : <ChevronDown size={12} style={{ color: "var(--accent-1)" }} />;
 }
 
-// ─── skeleton row ─────────────────────────────────────────────────────────────
-function SkeletonRow({ cols }) {
-  return (
-    <tr className="skeleton-row">
-      {Array.from({ length: cols }).map((_, i) => (
-        <td key={i}>
-          <span className="skeleton-cell" style={{ width: i === 0 ? "40px" : i === 1 ? "60px" : "80px" }} />
-        </td>
-      ))}
-    </tr>
-  );
-}
-
-// ─── empty state ──────────────────────────────────────────────────────────────
-function EmptyState({ filtered }) {
-  return (
-    <tr>
-      <td colSpan={COLUMNS.length} className="empty-state-cell">
-        <div className="empty-state">
-          <FileText size={36} className="empty-icon" />
-          <p className="empty-title">{filtered ? "No matching applications" : "No applications yet"}</p>
-          <p className="empty-sub">
-            {filtered
-              ? "Try adjusting your search or filter."
-              : "Evaluated loans will appear here."}
-          </p>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-// ─── main component ──────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────
 export default function HistoryPage() {
-  const [rows, setRows]         = useState([]);
-  const [total, setTotal]       = useState(0);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [rows, setRows]       = useState([]);
+  const [total, setTotal]     = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
-  const [search, setSearch]             = useState("");
+  const [search, setSearch]               = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [riskFilter, setRiskFilter]     = useState("ALL");
-  const [sortKey, setSortKey]           = useState("createdAt");
-  const [sortDir, setSortDir]           = useState("desc");
-  const [page, setPage]                 = useState(0);
-  const [pageSize, setPageSize]         = useState(10);
+  const [riskFilter, setRiskFilter]       = useState("ALL");
+  const [sortKey, setSortKey]             = useState("createdAt");
+  const [sortDir, setSortDir]             = useState("desc");
+  const [page, setPage]                   = useState(0);
+  const [pageSize, setPageSize]           = useState(10);
 
   const debounceRef = useRef(null);
   const abortRef    = useRef(null);
 
-  // ── debounce search ────────────────────────────────────────────────────────
   useEffect(() => {
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(0);
-    }, 350);
+    debounceRef.current = setTimeout(() => { setDebouncedSearch(search); setPage(0); }, 350);
     return () => clearTimeout(debounceRef.current);
   }, [search]);
 
-  // ── fetch ──────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
     setLoading(true);
     setError(null);
-
     try {
-      // loanService.getAll() maps to GET /api/loans
-      // Returns a flat array from Spring Boot
       const data = await getAllLoans();
-
       if (!controller.signal.aborted) {
         let filtered = data ?? [];
-
-        // client-side filter by riskTier
-        if (riskFilter !== "ALL") {
-          filtered = filtered.filter((r) => r.riskTier === riskFilter);
-        }
-
-        // client-side search by id
-        if (debouncedSearch) {
-          const q = debouncedSearch.toLowerCase();
-          filtered = filtered.filter((r) =>
-            String(r.id).includes(q)
-          );
-        }
-
-        // client-side sort
+        if (riskFilter !== "ALL") filtered = filtered.filter((r) => r.riskTier === riskFilter);
+        if (debouncedSearch) filtered = filtered.filter((r) => String(r.id).includes(debouncedSearch.toLowerCase()));
         filtered = [...filtered].sort((a, b) => {
           const av = a[sortKey], bv = b[sortKey];
           if (av == null) return 1;
@@ -152,10 +101,7 @@ export default function HistoryPage() {
           if (typeof av === "string") return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
           return sortDir === "asc" ? av - bv : bv - av;
         });
-
         setTotal(filtered.length);
-
-        // client-side pagination
         const start = page * pageSize;
         setRows(filtered.slice(start, start + pageSize));
       }
@@ -169,547 +115,368 @@ export default function HistoryPage() {
     }
   }, [page, pageSize, sortKey, sortDir, riskFilter, debouncedSearch]);
 
-  useEffect(() => {
-    fetchData();
-    return () => abortRef.current?.abort();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); return () => abortRef.current?.abort(); }, [fetchData]);
 
-  // ── sort toggle ────────────────────────────────────────────────────────────
   const toggleSort = (key) => {
     if (!COLUMNS.find((c) => c.key === key)?.sortable) return;
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
+    if (sortKey === key) setSortDir((d) => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("desc"); }
     setPage(0);
   };
 
-  // ── pagination helpers ─────────────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const pageStart  = total === 0 ? 0 : page * pageSize + 1;
   const pageEnd    = Math.min((page + 1) * pageSize, total);
 
   const pageNumbers = () => {
-    const pages = [];
-    const delta = 2;
-    const left  = Math.max(0, page - delta);
-    const right = Math.min(totalPages - 1, page + delta);
-    if (left > 0)        { pages.push(0); if (left > 1) pages.push("…"); }
+    const pages = [], delta = 2;
+    const left = Math.max(0, page - delta), right = Math.min(totalPages - 1, page + delta);
+    if (left > 0) { pages.push(0); if (left > 1) pages.push("…"); }
     for (let i = left; i <= right; i++) pages.push(i);
     if (right < totalPages - 1) { if (right < totalPages - 2) pages.push("…"); pages.push(totalPages - 1); }
     return pages;
   };
 
-  const isFiltered = riskFilter !== "ALL" || debouncedSearch.length > 0;
-
-  // ── export (CSV) ───────────────────────────────────────────────────────────
   const exportCSV = () => {
     if (!rows.length) return;
     const headers = COLUMNS.map((c) => c.label).join(",");
-    const csvRows = rows.map((r) =>
-      [
-        r.id,
-        r.age,
-        r.monthlyIncome,
-        r.debtRatio,
-        r.riskTier,
-        fmt.percent(r.defaultProbability),
-        `"${r.message ?? ""}"`,
-        fmt.date(r.createdAt),
-      ].join(",")
-    );
+    const csvRows = rows.map((r) => [r.id, r.age, r.monthlyIncome, r.debtRatio, r.riskTier, fmt.percent(r.defaultProbability), `"${r.message ?? ""}"`, fmt.date(r.createdAt)].join(","));
     const blob = new Blob([[headers, ...csvRows].join("\n")], { type: "text/csv" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
     a.href = url; a.download = `loanlens-history-${Date.now()}.csv`; a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV exported");
   };
 
-  // ── render ─────────────────────────────────────────────────────────────────
+  const isFiltered = riskFilter !== "ALL" || debouncedSearch.length > 0;
+
   return (
-    <div className="history-page">
-      {/* ── page header ── */}
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
+      {/* ── Page Header ── */}
       <motion.div
-        className="history-header"
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
+        className="flex items-end justify-between gap-4 flex-wrap"
       >
-        <div className="history-title-group">
-          <h1 className="history-title">Application History</h1>
-          <p className="history-subtitle">
-            {total > 0
-              ? `${total.toLocaleString()} total evaluation${total !== 1 ? "s" : ""}`
-              : "All evaluated loan applications"}
+        <div>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+            Application History
+          </h1>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
+            {total > 0 ? `${total.toLocaleString()} total evaluation${total !== 1 ? "s" : ""}` : "All evaluated loan applications"}
           </p>
         </div>
 
-        <div className="history-actions">
-          <button
-            className="ll-btn-ghost icon-btn"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={exportCSV}
             disabled={!rows.length}
-            title="Export current page as CSV"
+            style={{ borderColor: "var(--ll-border-strong)", color: "var(--text-secondary)", background: "transparent", fontSize: "0.8rem" }}
           >
-            <Download size={15} />
-            <span>Export</span>
-          </button>
-          <button
-            className="ll-btn-ghost icon-btn"
+            <Download size={13} className="mr-1.5" /> Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchData}
             disabled={loading}
-            title="Refresh"
+            style={{ borderColor: "var(--ll-border-strong)", color: "var(--text-secondary)", background: "transparent", fontSize: "0.8rem" }}
           >
-            <RefreshCw size={15} className={loading ? "spinning" : ""} />
-            <span>Refresh</span>
-          </button>
+            <RefreshCw size={13} className={`mr-1.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </Button>
         </div>
       </motion.div>
 
-      {/* ── toolbar ── */}
+      {/* ── Toolbar ── */}
       <motion.div
-        className="history-toolbar ll-card"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.05 }}
       >
-        {/* search */}
-        <div className="search-wrap">
-          <Search size={15} className="search-icon" />
-          <input
-            className="ll-input search-input"
-            placeholder="Search by ID…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button className="search-clear" onClick={() => setSearch("")} aria-label="Clear">
-              <X size={13} />
-            </button>
-          )}
-        </div>
+        <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 14 }}>
+          <CardContent className="px-4 py-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Search */}
+              <div className="relative flex-1" style={{ minWidth: 200, maxWidth: 320 }}>
+                <Search size={14} style={{ position: "absolute", left: "0.7rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+                <Input
+                  placeholder="Search by ID…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    paddingLeft: "2.1rem",
+                    paddingRight: search ? "2rem" : "0.85rem",
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--ll-border)",
+                    borderRadius: 10,
+                    color: "var(--text-primary)",
+                    fontSize: "0.85rem",
+                    height: 36,
+                  }}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    style={{ position: "absolute", right: "0.55rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 2, display: "flex" }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
 
-        {/* risk filter pills */}
-        <div className="filter-group">
-          <Filter size={14} className="filter-label-icon" />
-          {RISK_TIERS.map((tier) => (
-            <button
-              key={tier}
-              className={`filter-pill ${riskFilter === tier ? "active" : ""} ${tier !== "ALL" ? `risk-${tier.toLowerCase()}` : ""}`}
-              onClick={() => { setRiskFilter(tier); setPage(0); }}
-            >
-              {tier}
-            </button>
-          ))}
-        </div>
+              <Separator orientation="vertical" style={{ height: 24, background: "var(--ll-border)" }} />
 
-        {/* page size */}
-        <div className="pagesize-group">
-          <span className="pagesize-label">Show</span>
-          <select
-            className="ll-input pagesize-select"
-            value={pageSize}
-            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-          >
-            {PAGE_SIZE_OPTIONS.map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-        </div>
+              {/* Risk filter pills */}
+              <div className="flex items-center gap-1.5">
+                <Filter size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                {RISK_TIERS.map((tier) => {
+                  const c = TIER_COLORS[tier];
+                  const isActive = riskFilter === tier;
+                  return (
+                    <button
+                      key={tier}
+                      onClick={() => { setRiskFilter(tier); setPage(0); }}
+                      style={{
+                        padding: "0.28rem 0.75rem",
+                        borderRadius: 20,
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        fontFamily: "'DM Sans', sans-serif",
+                        cursor: "pointer",
+                        border: `1px solid ${isActive ? c.border : "var(--ll-border)"}`,
+                        background: isActive ? c.bg : "transparent",
+                        color: isActive ? c.color : "var(--text-muted)",
+                        transition: "all 0.16s ease",
+                      }}
+                    >
+                      {tier}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Page size */}
+              <div className="flex items-center gap-2 ml-auto">
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>Show</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+                  style={{
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--ll-border)",
+                    borderRadius: 8,
+                    color: "var(--text-primary)",
+                    fontSize: "0.82rem",
+                    padding: "0.3rem 0.6rem",
+                    cursor: "pointer",
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* ── error banner ── */}
+      {/* ── Error Banner ── */}
       <AnimatePresence>
         {error && (
           <motion.div
-            className="error-banner ll-card"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-2 px-4 py-3 rounded-xl"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444", fontSize: "0.85rem" }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={15} />
             <span>{error}</span>
-            <button onClick={fetchData} className="retry-btn">Retry</button>
+            <button
+              onClick={fetchData}
+              style={{ marginLeft: "auto", background: "#ef4444", color: "#fff", border: "none", borderRadius: 6, padding: "0.28rem 0.65rem", fontSize: "0.78rem", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+            >
+              Retry
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── table card ── */}
+      {/* ── Table Card ── */}
       <motion.div
-        className="table-card ll-card"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="table-scroll">
-          <table className="history-table">
-            <thead>
-              <tr>
-                {COLUMNS.map((col) => (
-                  <th
-                    key={col.key}
-                    style={{ minWidth: col.width }}
-                    className={col.sortable ? "sortable" : ""}
-                    onClick={() => toggleSort(col.key)}
-                  >
-                    <span className="th-inner">
-                      {col.label}
-                      {col.sortable && (
-                        <SortIcon column={col.key} sortKey={sortKey} sortDir={sortDir} />
-                      )}
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                Array.from({ length: Math.min(pageSize, 10) }).map((_, i) => (
-                  <SkeletonRow key={i} cols={COLUMNS.length} />
-                ))
-              ) : rows.length === 0 ? (
-                <EmptyState filtered={isFiltered} />
-              ) : (
-                rows.map((row, i) => (
-                  <motion.tr
-                    key={row.id}
-                    className="data-row"
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2, delay: i * 0.025 }}
-                  >
-                    <td className="cell-id">#{row.id}</td>
-                    <td>{row.age ?? "—"}</td>
-                    <td className="cell-amount">₹{fmt.currency(row.monthlyIncome)}</td>
-                    <td>{row.debtRatio != null ? row.debtRatio.toFixed(2) : "—"}</td>
-                    <td className="cell-risk">
-                      <RiskBadge tier={row.riskTier} />
-                    </td>
-                    <td className="cell-prob">
-                      <div className="prob-wrap">
-                        <div
-                          className={`prob-bar ${
-                            row.defaultProbability > 0.6 ? "prob-high"
-                            : row.defaultProbability > 0.35 ? "prob-med"
-                            : "prob-low"
-                          }`}
-                          style={{ width: `${Math.min(100, (row.defaultProbability ?? 0) * 100)}%` }}
-                        />
-                        <span className="prob-label">{fmt.percent(row.defaultProbability)}</span>
+        <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
+            <Table>
+              <TableHeader>
+                <TableRow style={{ borderColor: "var(--ll-border)", background: "rgba(255,255,255,0.02)" }}>
+                  {COLUMNS.map((col) => (
+                    <TableHead
+                      key={col.key}
+                      onClick={() => toggleSort(col.key)}
+                      style={{
+                        color: "var(--text-muted)",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.07em",
+                        textTransform: "uppercase",
+                        cursor: col.sortable ? "pointer" : "default",
+                        whiteSpace: "nowrap",
+                        userSelect: "none",
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        {col.label}
+                        {col.sortable && <SortIcon column={col.key} sortKey={sortKey} sortDir={sortDir} />}
                       </div>
-                    </td>
-                    <td className="cell-verdict">
-                      <VerdictChip verdict={row.riskTier} />
-                    </td>
-                    <td className="cell-date">{fmt.date(row.createdAt)}</td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
 
-        {/* ── pagination ── */}
-        <div className="pagination-bar">
-          <span className="pagination-info">
-            {total === 0 ? "No results" : `${pageStart}–${pageEnd} of ${total.toLocaleString()}`}
-          </span>
-
-          <div className="pagination-controls">
-            <button
-              className="page-btn"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0 || loading}
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            {pageNumbers().map((p, i) =>
-              p === "…" ? (
-                <span key={`ellipsis-${i}`} className="page-ellipsis">…</span>
-              ) : (
-                <button
-                  key={p}
-                  className={`page-btn ${p === page ? "active" : ""}`}
-                  onClick={() => setPage(p)}
-                  disabled={loading}
-                >
-                  {p + 1}
-                </button>
-              )
-            )}
-
-            <button
-              className="page-btn"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1 || loading}
-              aria-label="Next page"
-            >
-              <ChevronRight size={15} />
-            </button>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: Math.min(pageSize, 8) }).map((_, i) => (
+                    <TableRow key={i} style={{ borderColor: "var(--ll-border)" }}>
+                      {COLUMNS.map((col) => (
+                        <TableCell key={col.key}>
+                          <Skeleton className="h-4" style={{ width: col.key === "id" ? 32 : 72, background: "var(--ll-border)" }} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={COLUMNS.length}>
+                      <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <FileText size={36} style={{ color: "var(--text-muted)", opacity: 0.4 }} />
+                        <p style={{ fontWeight: 600, color: "var(--text-secondary)", margin: 0 }}>
+                          {isFiltered ? "No matching applications" : "No applications yet"}
+                        </p>
+                        <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: 0 }}>
+                          {isFiltered ? "Try adjusting your search or filter." : "Evaluated loans will appear here."}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map((row, i) => (
+                    <motion.tr
+                      key={row.id}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: i * 0.025 }}
+                      style={{ borderColor: "var(--ll-border)" }}
+                      className="hover:bg-white/[0.03] transition-colors"
+                    >
+                      <TableCell style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.78rem", color: "var(--accent-1)", fontWeight: 600 }}>
+                        #{row.id}
+                      </TableCell>
+                      <TableCell style={{ color: "var(--text-primary)" }}>{row.age ?? "—"}</TableCell>
+                      <TableCell style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+                        {fmt.currency(row.monthlyIncome)}
+                      </TableCell>
+                      <TableCell style={{ color: "var(--text-secondary)" }}>
+                        {row.debtRatio != null ? row.debtRatio.toFixed(2) : "—"}
+                      </TableCell>
+                      <TableCell><RiskBadge tier={row.riskTier} /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div style={{ flex: 1, height: 4, borderRadius: 99, background: "var(--ll-border)", overflow: "hidden", maxWidth: 60 }}>
+                            <div
+                              style={{
+                                height: "100%",
+                                borderRadius: 99,
+                                width: `${Math.min(100, (row.defaultProbability ?? 0) * 100)}%`,
+                                background: row.defaultProbability > 0.6 ? "#ef4444" : row.defaultProbability > 0.35 ? "#f59e0b" : "#10b981",
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 600, color: row.defaultProbability > 0.6 ? "#ef4444" : row.defaultProbability > 0.35 ? "#f59e0b" : "#10b981" }}>
+                            {fmt.percent(row.defaultProbability)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell><VerdictChip verdict={row.riskTier} /></TableCell>
+                      <TableCell style={{ fontSize: "0.8rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                        {fmt.date(row.createdAt)}
+                      </TableCell>
+                    </motion.tr>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </motion.div>
 
-      {/* ── scoped styles ── */}
-      <style>{`
-        .history-page {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-          padding: 1.75rem 2rem;
-          min-height: 100%;
-        }
-        .history-header {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-        .history-title {
-          font-family: var(--font-display, 'Syne', sans-serif);
-          font-size: 1.65rem;
-          font-weight: 700;
-          color: var(--color-text-primary);
-          margin: 0;
-          line-height: 1.1;
-        }
-        .history-subtitle {
-          margin: 0.25rem 0 0;
-          font-size: 0.82rem;
-          color: var(--color-text-muted);
-        }
-        .history-actions { display: flex; gap: 0.5rem; align-items: center; }
-        .ll-btn-ghost {
-          background: transparent;
-          border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-          border-radius: 8px;
-          color: var(--color-text-secondary);
-          cursor: pointer;
-          transition: all 0.18s ease;
-          font-size: 0.82rem;
-        }
-        .ll-btn-ghost:hover:not(:disabled) {
-          background: var(--color-surface-hover, rgba(255,255,255,0.06));
-          color: var(--color-text-primary);
-        }
-        .ll-btn-ghost:disabled { opacity: 0.4; cursor: default; }
-        .icon-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          padding: 0.45rem 0.85rem;
-          font-family: var(--font-body, 'DM Sans', sans-serif);
-        }
-        .spinning { animation: spin 0.9s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .history-toolbar {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          flex-wrap: wrap;
-          padding: 0.85rem 1.1rem;
-        }
-        .search-wrap {
-          position: relative;
-          flex: 1;
-          min-width: 200px;
-          max-width: 340px;
-        }
-        .search-icon {
-          position: absolute;
-          left: 0.7rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--color-text-muted);
-          pointer-events: none;
-        }
-        .search-input {
-          width: 100%;
-          padding-left: 2.1rem !important;
-          padding-right: 2rem !important;
-        }
-        .search-clear {
-          position: absolute;
-          right: 0.55rem;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: var(--color-text-muted);
-          padding: 2px;
-          display: flex;
-          border-radius: 4px;
-        }
-        .search-clear:hover { color: var(--color-text-primary); }
-        .filter-group { display: flex; align-items: center; gap: 0.35rem; }
-        .filter-label-icon { color: var(--color-text-muted); flex-shrink: 0; }
-        .filter-pill {
-          padding: 0.3rem 0.75rem;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          font-family: var(--font-body, 'DM Sans', sans-serif);
-          letter-spacing: 0.03em;
-          cursor: pointer;
-          border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-          background: transparent;
-          color: var(--color-text-secondary);
-          transition: all 0.16s ease;
-        }
-        .filter-pill:hover { background: var(--color-surface-hover, rgba(255,255,255,0.06)); }
-        .filter-pill.active { background: var(--color-accent, #6366f1); border-color: var(--color-accent, #6366f1); color: #fff; }
-        .filter-pill.risk-low.active   { background: var(--color-success, #22c55e); border-color: var(--color-success, #22c55e); }
-        .filter-pill.risk-medium.active { background: var(--color-warning, #f59e0b); border-color: var(--color-warning, #f59e0b); }
-        .filter-pill.risk-high.active  { background: var(--color-danger, #ef4444);  border-color: var(--color-danger, #ef4444); }
-        .pagesize-group { display: flex; align-items: center; gap: 0.45rem; margin-left: auto; }
-        .pagesize-label { font-size: 0.8rem; color: var(--color-text-muted); white-space: nowrap; }
-        .pagesize-select { padding: 0.35rem 0.6rem !important; width: auto !important; cursor: pointer; }
-        .error-banner {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          padding: 0.75rem 1rem;
-          background: rgba(239,68,68,0.08);
-          border: 1px solid rgba(239,68,68,0.25);
-          border-radius: 10px;
-          color: var(--color-danger, #ef4444);
-          font-size: 0.85rem;
-          overflow: hidden;
-        }
-        .retry-btn {
-          margin-left: auto;
-          background: var(--color-danger, #ef4444);
-          color: #fff;
-          border: none;
-          border-radius: 6px;
-          padding: 0.3rem 0.7rem;
-          font-size: 0.78rem;
-          cursor: pointer;
-          font-family: var(--font-body, 'DM Sans', sans-serif);
-        }
-        .table-card { padding: 0; overflow: hidden; border-radius: 14px; }
-        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .history-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.84rem;
-          font-family: var(--font-body, 'DM Sans', sans-serif);
-        }
-        .history-table thead tr {
-          border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.08));
-          background: var(--color-surface-subtle, rgba(255,255,255,0.025));
-        }
-        .history-table th {
-          padding: 0.75rem 1rem;
-          text-align: left;
-          font-size: 0.75rem;
-          font-weight: 600;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--color-text-muted);
-          white-space: nowrap;
-          user-select: none;
-        }
-        .history-table th.sortable { cursor: pointer; }
-        .history-table th.sortable:hover .th-inner { color: var(--color-text-primary); }
-        .th-inner { display: inline-flex; align-items: center; gap: 0.3rem; transition: color 0.15s; }
-        .sort-icon { opacity: 0.5; }
-        .sort-icon.active { opacity: 1; color: var(--color-accent, #6366f1); }
-        .sort-icon.muted  { opacity: 0.3; }
-        .history-table tbody tr.data-row {
-          border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.05));
-          transition: background 0.15s;
-        }
-        .history-table tbody tr.data-row:last-child { border-bottom: none; }
-        .history-table tbody tr.data-row:hover { background: var(--color-surface-hover, rgba(255,255,255,0.04)); }
-        .history-table td { padding: 0.75rem 1rem; color: var(--color-text-primary); vertical-align: middle; }
-        .cell-id { color: var(--color-text-muted); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
-        .cell-amount { font-variant-numeric: tabular-nums; font-weight: 500; }
-        .cell-date { font-size: 0.8rem; color: var(--color-text-secondary); white-space: nowrap; }
-        .prob-wrap { position: relative; width: 80px; }
-        .prob-bar {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          height: 3px;
-          border-radius: 2px;
-          opacity: 0.35;
-          transition: width 0.4s ease;
-        }
-        .prob-bar.prob-low  { background: var(--color-success, #22c55e); }
-        .prob-bar.prob-med  { background: var(--color-warning, #f59e0b); }
-        .prob-bar.prob-high { background: var(--color-danger,  #ef4444); }
-        .prob-label { position: relative; font-size: 0.82rem; font-variant-numeric: tabular-nums; font-weight: 500; }
-        .skeleton-row td { padding: 0.85rem 1rem; }
-        .skeleton-cell {
-          display: inline-block;
-          height: 14px;
-          border-radius: 6px;
-          background: var(--color-skeleton, rgba(255,255,255,0.07));
-          animation: shimmer 1.4s ease-in-out infinite;
-        }
-        @keyframes shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-        .empty-state-cell { padding: 3.5rem 1rem !important; }
-        .empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
-        .empty-icon { color: var(--color-text-muted); opacity: 0.4; }
-        .empty-title { font-weight: 600; color: var(--color-text-secondary); margin: 0; }
-        .empty-sub   { font-size: 0.82rem; color: var(--color-text-muted); margin: 0; }
-        .pagination-bar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0.75rem;
-          padding: 0.85rem 1.1rem;
-          border-top: 1px solid var(--color-border, rgba(255,255,255,0.07));
-          flex-wrap: wrap;
-        }
-        .pagination-info { font-size: 0.8rem; color: var(--color-text-muted); }
-        .pagination-controls { display: flex; align-items: center; gap: 0.3rem; }
-        .page-btn {
-          min-width: 32px;
-          height: 32px;
-          padding: 0 0.4rem;
-          border-radius: 7px;
-          border: 1px solid var(--color-border, rgba(255,255,255,0.1));
-          background: transparent;
-          color: var(--color-text-secondary);
-          font-size: 0.82rem;
-          font-family: var(--font-body, 'DM Sans', sans-serif);
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.15s ease;
-          font-variant-numeric: tabular-nums;
-        }
-        .page-btn:hover:not(:disabled):not(.active) {
-          background: var(--color-surface-hover, rgba(255,255,255,0.06));
-          color: var(--color-text-primary);
-        }
-        .page-btn.active {
-          background: var(--color-accent, #6366f1);
-          border-color: var(--color-accent, #6366f1);
-          color: #fff;
-          font-weight: 600;
-        }
-        .page-btn:disabled { opacity: 0.3; cursor: default; }
-        .page-ellipsis { color: var(--color-text-muted); font-size: 0.85rem; padding: 0 0.2rem; line-height: 32px; }
-        @media (max-width: 768px) {
-          .history-page { padding: 1rem; }
-          .history-toolbar { gap: 0.75rem; }
-          .search-wrap { max-width: 100%; }
-          .pagesize-group { margin-left: 0; }
-          .history-header { flex-direction: column; align-items: flex-start; }
-        }
-      `}</style>
+          {/* ── Pagination ── */}
+          <div
+            className="flex items-center justify-between gap-3 flex-wrap px-4 py-3"
+            style={{ borderTop: "1px solid var(--ll-border)" }}
+          >
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              {total === 0 ? "No results" : `${pageStart}–${pageEnd} of ${total.toLocaleString()}`}
+            </span>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0 || loading}
+                style={pageBtnStyle(false)}
+              >
+                <ChevronLeft size={14} />
+              </button>
+
+              {pageNumbers().map((p, i) =>
+                p === "…" ? (
+                  <span key={`e-${i}`} style={{ color: "var(--text-muted)", fontSize: "0.85rem", padding: "0 0.2rem" }}>…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    disabled={loading}
+                    style={pageBtnStyle(p === page)}
+                  >
+                    {p + 1}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1 || loading}
+                style={pageBtnStyle(false)}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
     </div>
   );
 }
+
+const pageBtnStyle = (active) => ({
+  minWidth: 32,
+  height: 32,
+  padding: "0 0.4rem",
+  borderRadius: 7,
+  border: `1px solid ${active ? "var(--accent-1)" : "var(--ll-border)"}`,
+  background: active ? "rgba(14,165,233,0.15)" : "transparent",
+  color: active ? "var(--accent-1)" : "var(--text-secondary)",
+  fontSize: "0.82rem",
+  fontFamily: "'DM Sans', sans-serif",
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: active ? 700 : 400,
+});

@@ -2,10 +2,19 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Cell
+  ResponsiveContainer, Cell, LineChart, Line,
+  CartesianGrid
 } from "recharts";
-import { TrendingUp, Users, AlertTriangle, CheckCircle } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle, CheckCircle, Activity } from "lucide-react";
 import toast from "react-hot-toast";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 
 import AnimatedCounter from "../../components/AnimatedCounter";
 import RiskBadge from "../../components/RiskBadge";
@@ -17,198 +26,239 @@ const getTier = (p) => (p < 0.35 ? "LOW" : p < 0.65 ? "MEDIUM" : "HIGH");
 
 const computeStats = (loans) => {
   if (!loans.length) return { total: 0, low: 0, medium: 0, high: 0, avgProb: 0 };
-  const low    = loans.filter((l) => getTier(l.probability ?? 0) === "LOW").length;
-  const medium = loans.filter((l) => getTier(l.probability ?? 0) === "MEDIUM").length;
-  const high   = loans.filter((l) => getTier(l.probability ?? 0) === "HIGH").length;
-  const avgProb = loans.reduce((s, l) => s + (l.probability ?? 0), 0) / loans.length;
+  const low    = loans.filter((l) => getTier(l.defaultProbability ?? 0) === "LOW").length;
+  const medium = loans.filter((l) => getTier(l.defaultProbability ?? 0) === "MEDIUM").length;
+  const high   = loans.filter((l) => getTier(l.defaultProbability ?? 0) === "HIGH").length;
+  const avgProb = loans.reduce((s, l) => s + (l.defaultProbability ?? 0), 0) / loans.length;
   return { total: loans.length, low, medium, high, avgProb };
 };
 
-// ─── Stat card ────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, suffix = "", prefix = "", color, delay = 0 }) {
+// ─── Stat Card ────────────────────────────────────────────────
+function StatCard({ icon: Icon, label, value, suffix = "", color, delay = 0, loading }) {
   return (
     <motion.div
-      className="ll-card"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      style={{ padding: "1.25rem 1.4rem", display: "flex", flexDirection: "column", gap: "0.9rem" }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span
-          style={{
-            fontSize: "0.68rem",
-            fontWeight: 700,
-            letterSpacing: "0.07em",
-            textTransform: "uppercase",
-            color: "var(--text-muted)",
-          }}
-        >
-          {label}
-        </span>
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 10,
-            background: `${color}18`,
-            border: `1px solid ${color}33`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon size={16} color={color} />
-        </div>
-      </div>
-
-      <AnimatedCounter
-        value={value}
-        prefix={prefix}
-        suffix={suffix}
-        decimals={suffix === "%" ? 1 : 0}
-        className=""
+      <Card
         style={{
-          fontFamily: "'Syne', sans-serif",
-          fontSize: "2rem",
-          fontWeight: 800,
-          color: "var(--text-primary)",
-          lineHeight: 1,
+          background: "var(--bg-card)",
+          border: "1px solid var(--ll-border)",
+          borderRadius: 16,
+          boxShadow: "var(--shadow-card)",
         }}
-      />
+      >
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <span
+              style={{
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "var(--text-muted)",
+              }}
+            >
+              {label}
+            </span>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: `${color}18`,
+                border: `1px solid ${color}33`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon size={16} color={color} />
+            </div>
+          </div>
+          {loading ? (
+            <Skeleton className="h-8 w-20" style={{ background: "var(--ll-border)" }} />
+          ) : (
+            <AnimatedCounter
+              value={value}
+              suffix={suffix}
+              decimals={suffix === "%" ? 1 : 0}
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontSize: "2rem",
+                fontWeight: 800,
+                color: "var(--text-primary)",
+                lineHeight: 1,
+              }}
+            />
+          )}
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }
 
-// ─── Custom tooltip for bar chart ─────────────────────────────
-function CustomTooltip({ active, payload }) {
+// ─── Custom Tooltip ───────────────────────────────────────────
+function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div
       style={{
         background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: "0.5rem 0.85rem",
+        border: "1px solid var(--ll-border-strong)",
+        borderRadius: 10,
+        padding: "0.6rem 1rem",
         fontSize: "0.82rem",
         color: "var(--text-primary)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
-      <p style={{ margin: 0, fontWeight: 600 }}>{payload[0].name}</p>
+      <p style={{ margin: 0, fontWeight: 700, marginBottom: 2 }}>{label || payload[0].name}</p>
       <p style={{ margin: 0, color: "var(--text-muted)" }}>{payload[0].value} applications</p>
     </div>
   );
 }
 
-// ─── Recent evaluations table ─────────────────────────────────
-function RecentTable({ loans }) {
+// ─── Recent Table ─────────────────────────────────────────────
+function RecentTable({ loans, loading }) {
   const recent = [...loans]
     .sort((a, b) => new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0))
     .slice(0, 8);
 
-  const COLS = ["ID", "Date", "Income", "Probability", "Risk", "Verdict"];
-  const COL_WIDTHS = "50px 110px 110px 100px 120px 150px";
-
   return (
-    <div className="ll-card" style={{ overflow: "hidden", padding: 0 }}>
-      {/* Header */}
-      <div
-        style={{
-          padding: "1rem 1.25rem 0.6rem",
-          borderBottom: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
+    <Card
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--ll-border)",
+        borderRadius: 16,
+        boxShadow: "var(--shadow-card)",
+        overflow: "hidden",
+      }}
+    >
+      <CardHeader
+        className="px-6 py-4"
+        style={{ borderBottom: "1px solid var(--ll-border)" }}
       >
-        <p
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            color: "var(--text-primary)",
-            margin: 0,
-          }}
-        >
-          Recent Evaluations
-        </p>
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-          Last {recent.length} entries
-        </span>
-      </div>
-
-      {/* Column labels */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: COL_WIDTHS,
-          gap: "0.75rem",
-          padding: "0.55rem 1.25rem",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-surface)",
-        }}
-      >
-        {COLS.map((c) => (
-          <span
-            key={c}
+        <div className="flex items-center justify-between">
+          <CardTitle
             style={{
-              fontSize: "0.65rem",
+              fontFamily: "'Syne', sans-serif",
+              fontSize: "0.95rem",
               fontWeight: 700,
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: "var(--text-muted)",
+              color: "var(--text-primary)",
             }}
           >
-            {c}
-          </span>
-        ))}
-      </div>
-
-      {/* Rows */}
-      {recent.length === 0 ? (
-        <p style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-          No evaluations yet
-        </p>
-      ) : (
-        recent.map((app, i) => (
-          <motion.div
-            key={app.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: i * 0.04 }}
+            Recent Evaluations
+          </CardTitle>
+          <Badge
+            variant="outline"
             style={{
-              display: "grid",
-              gridTemplateColumns: COL_WIDTHS,
-              gap: "0.75rem",
-              padding: "0.75rem 1.25rem",
-              borderBottom: i < recent.length - 1 ? "1px solid var(--border)" : "none",
-              alignItems: "center",
+              borderColor: "var(--ll-border-strong)",
+              color: "var(--text-muted)",
+              fontSize: "0.72rem",
             }}
           >
-            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: 600 }}>
-              #{app.id}
-            </span>
-            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-              {app.createdAt
-                ? new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                : "—"}
-            </span>
-            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-              {app.monthlyIncome ? `$${Number(app.monthlyIncome).toLocaleString()}` : "—"}
-            </span>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
-              {app.probability != null ? Math.round(app.probability * 100) + "%" : "—"}
-            </span>
-            <RiskBadge tier={app.riskTier ?? getTier(app.probability ?? 0.5)} size="sm" />
-            <VerdictChip probability={app.probability ?? 0.5} />
-          </motion.div>
-        ))
-      )}
-    </div>
+            Last {recent.length} entries
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" style={{ background: "var(--ll-border)" }} />
+            ))}
+          </div>
+        ) : recent.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Activity size={32} color="var(--text-muted)" strokeWidth={1.5} />
+            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>
+              No evaluations yet
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow style={{ borderColor: "var(--ll-border)" }}>
+                {["ID", "Date", "Income", "Probability", "Risk", "Verdict"].map((h) => (
+                  <TableHead
+                    key={h}
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.07em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {h}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recent.map((app, i) => (
+                <motion.tr
+                  key={app.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  style={{ borderColor: "var(--ll-border)" }}
+                  className="hover:bg-white/5 transition-colors"
+                >
+                  <TableCell
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.78rem",
+                      color: "var(--accent-1)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    #{app.id}
+                  </TableCell>
+                  <TableCell style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                    {app.createdAt
+                      ? new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                      : "—"}
+                  </TableCell>
+                  <TableCell style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                    {app.monthlyIncome ? `$${Number(app.monthlyIncome).toLocaleString()}` : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      style={{
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: "0.85rem",
+                        fontWeight: 700,
+                        color: app.defaultProbability > 0.65
+                          ? "#ef4444"
+                          : app.defaultProbability > 0.35
+                          ? "#f59e0b"
+                          : "#10b981",
+                      }}
+                    >
+                      {app.defaultProbability != null ? Math.round(app.defaultProbability * 100) + "%" : "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <RiskBadge tier={app.riskTier ?? getTier(app.defaultProbability ?? 0.5)} size="sm" />
+                  </TableCell>
+                  <TableCell>
+                    <VerdictChip probability={app.defaultProbability ?? 0.5} />
+                  </TableCell>
+                </motion.tr>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────
+// ─── Main Dashboard ───────────────────────────────────────────
 export default function Dashboard() {
   const [loans, setLoans]     = useState([]);
   const [loading, setLoading] = useState(true);
@@ -223,31 +273,31 @@ export default function Dashboard() {
   const stats = computeStats(loans);
 
   const riskChartData = [
-    { name: "Low Risk",    value: stats.low,    color: "#10b981" },
-    { name: "Medium Risk", value: stats.medium, color: "#f59e0b" },
-    { name: "High Risk",   value: stats.high,   color: "#ef4444" },
+    { name: "Low",    value: stats.low,    color: "#10b981" },
+    { name: "Medium", value: stats.medium, color: "#f59e0b" },
+    { name: "High",   value: stats.high,   color: "#ef4444" },
   ];
 
   const statCards = [
-    { icon: Users,         label: "Total Applications", value: stats.total,              color: "#0ea5e9" },
-    { icon: CheckCircle,   label: "Low Risk",            value: stats.low,                color: "#10b981" },
-    { icon: AlertTriangle, label: "High Risk",           value: stats.high,               color: "#ef4444" },
-    { icon: TrendingUp,    label: "Avg Default Prob",    value: stats.avgProb * 100, suffix: "%", color: "#f59e0b" },
+    { icon: Users,         label: "Total Applications", value: stats.total,         color: "#0ea5e9" },
+    { icon: CheckCircle,   label: "Low Risk",           value: stats.low,           color: "#10b981" },
+    { icon: AlertTriangle, label: "High Risk",          value: stats.high,          color: "#ef4444" },
+    { icon: TrendingUp,    label: "Avg Default Prob",   value: stats.avgProb * 100, suffix: "%", color: "#f59e0b" },
   ];
 
   return (
-    <div>
-      {/* Page title */}
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+      {/* ── Page Title ── */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        style={{ marginBottom: "1.5rem" }}
       >
         <h1
           style={{
             fontFamily: "'Syne', sans-serif",
-            fontSize: "1.6rem",
+            fontSize: "1.7rem",
             fontWeight: 800,
             color: "var(--text-primary)",
             margin: 0,
@@ -255,171 +305,181 @@ export default function Dashboard() {
         >
           Portfolio Dashboard
         </h1>
-        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0.2rem 0 0" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
           Real-time overview of all loan evaluations
         </p>
       </motion.div>
 
-      {/* Stat cards grid */}
+      {/* ── Stat Cards ── */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: "1rem",
-          marginBottom: "1.5rem",
         }}
       >
         {statCards.map((card, i) => (
-          <StatCard key={card.label} {...card} delay={i * 0.08} />
+          <StatCard key={card.label} {...card} delay={i * 0.08} loading={loading} />
         ))}
       </div>
 
-      {/* Charts row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "1rem",
-          marginBottom: "1.5rem",
-        }}
-      >
-        {/* Risk segment bar chart */}
+      {/* ── Charts Row ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+
+        {/* Risk Segments Bar Chart */}
         <motion.div
-          className="ll-card"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.35 }}
-          style={{ padding: "1.25rem" }}
         >
-          <p
+          <Card
             style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 700,
-              fontSize: "0.95rem",
-              color: "var(--text-primary)",
-              marginBottom: "1.25rem",
+              background: "var(--bg-card)",
+              border: "1px solid var(--ll-border)",
+              borderRadius: 16,
+              boxShadow: "var(--shadow-card)",
             }}
           >
-            Risk Segments
-          </p>
-          {loading ? (
-            <div style={{ height: 180, background: "var(--border)", borderRadius: 8, opacity: 0.4 }} />
-          ) : (
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={riskChartData} barSize={40}>
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11, fill: "var(--text-muted)", fontFamily: "DM Sans" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "var(--text-muted)", fontFamily: "DM Sans" }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--border)" }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {riskChartData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} opacity={0.85} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+            <CardHeader className="px-5 pt-5 pb-2">
+              <CardTitle
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                }}
+              >
+                Risk Segments
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+              {loading ? (
+                <Skeleton className="h-44 w-full" style={{ background: "var(--ll-border)" }} />
+              ) : (
+                <ResponsiveContainer width="100%" height={176}>
+                  <BarChart data={riskChartData} barSize={44} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid vertical={false} stroke="var(--ll-border)" strokeDasharray="4 4" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 11, fill: "var(--text-muted)", fontFamily: "DM Sans" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "var(--text-muted)", fontFamily: "DM Sans" }}
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                      {riskChartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} opacity={0.9} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* Risk distribution breakdown */}
+        {/* Distribution Breakdown */}
         <motion.div
-          className="ll-card"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.42 }}
-          style={{ padding: "1.25rem" }}
         >
-          <p
+          <Card
             style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 700,
-              fontSize: "0.95rem",
-              color: "var(--text-primary)",
-              marginBottom: "1.25rem",
+              background: "var(--bg-card)",
+              border: "1px solid var(--ll-border)",
+              borderRadius: 16,
+              boxShadow: "var(--shadow-card)",
+              height: "100%",
             }}
           >
-            Distribution Breakdown
-          </p>
+            <CardHeader className="px-5 pt-5 pb-2">
+              <CardTitle
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                }}
+              >
+                Distribution Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+                {[
+                  { label: "Low Risk",    count: stats.low,    color: "#10b981" },
+                  { label: "Medium Risk", count: stats.medium, color: "#f59e0b" },
+                  { label: "High Risk",   count: stats.high,   color: "#ef4444" },
+                ].map(({ label, count, color }) => {
+                  const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
+                  return (
+                    <div key={label}>
+                      <div className="flex justify-between mb-1.5">
+                        <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+                          {label}
+                        </span>
+                        <span style={{ fontSize: "0.82rem", color, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>
+                          {count} ({pct}%)
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          height: 8,
+                          borderRadius: 99,
+                          background: "var(--ll-border)",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                          style={{ height: "100%", background: color, borderRadius: 99 }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {[
-              { label: "Low Risk",    count: stats.low,    color: "#10b981", bg: "rgba(16,185,129,0.15)" },
-              { label: "Medium Risk", count: stats.medium, color: "#f59e0b", bg: "rgba(245,158,11,0.15)"  },
-              { label: "High Risk",   count: stats.high,   color: "#ef4444", bg: "rgba(239,68,68,0.15)"  },
-            ].map(({ label, count, color, bg }) => {
-              const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
-              return (
-                <div key={label}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.35rem" }}>
-                    <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-                      {label}
-                    </span>
-                    <span style={{ fontSize: "0.82rem", color, fontWeight: 700 }}>
-                      {count} ({pct}%)
-                    </span>
-                  </div>
-                  <div
+              <Separator className="my-4" style={{ background: "var(--ll-border)" }} />
+
+              <div className="flex justify-between items-center">
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Total evaluated</span>
+                {loading ? (
+                  <Skeleton className="h-7 w-12" style={{ background: "var(--ll-border)" }} />
+                ) : (
+                  <span
                     style={{
-                      height: 8,
-                      borderRadius: 99,
-                      background: "var(--border)",
-                      overflow: "hidden",
+                      fontFamily: "'Syne', sans-serif",
+                      fontSize: "1.3rem",
+                      fontWeight: 800,
+                      color: "var(--text-primary)",
                     }}
                   >
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                      style={{ height: "100%", background: color, borderRadius: 99 }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Total */}
-          <div
-            style={{
-              marginTop: "1.25rem",
-              paddingTop: "1rem",
-              borderTop: "1px solid var(--border)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Total evaluated</span>
-            <span
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "1.2rem",
-                fontWeight: 800,
-                color: "var(--text-primary)",
-              }}
-            >
-              {stats.total}
-            </span>
-          </div>
+                    {stats.total}
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
 
-      {/* Recent evaluations table */}
+      {/* ── Recent Evaluations Table ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.5 }}
       >
-        <RecentTable loans={loans} />
+        <RecentTable loans={loans} loading={loading} />
       </motion.div>
     </div>
   );
