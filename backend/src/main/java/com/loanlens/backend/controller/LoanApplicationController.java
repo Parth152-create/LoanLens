@@ -2,8 +2,9 @@ package com.loanlens.backend.controller;
 
 import com.loanlens.backend.dto.LoanApplicationResponse;
 import com.loanlens.backend.dto.LoanRequest;
-import com.loanlens.backend.service.LoanApplicationService;
 import com.loanlens.backend.model.LoanApplication;
+import com.loanlens.backend.service.LoanApplicationService;
+import jakarta.validation.Valid;                          // ← ADDED import
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,8 @@ public class LoanApplicationController {
     }
 
     @PostMapping
-    public ResponseEntity<LoanApplicationResponse> evaluate(@RequestBody LoanRequest request) {
+    public ResponseEntity<LoanApplicationResponse> evaluate(
+            @Valid @RequestBody LoanRequest request) {   // ← ADDED @Valid
         LoanApplication result = service.evaluate(request);
         return ResponseEntity.ok(LoanApplicationResponse.from(result));
     }

@@ -1,59 +1,48 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "./context/ThemeContext";
-import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "./context/AuthContext";
+import PrivateRoute from "./components/PrivateRoute";
 
-// User pages
-import ApplyForm from "./pages/user/ApplyForm";
-import MyHistory from "./pages/user/MyHistory";
+// Public
+import LoginPage from "./pages/LoginPage";
 
-// Admin pages
-import Dashboard from "./pages/admin/Dashboard";
-import EvaluatePage from "./pages/admin/EvaluatePage";
-import HistoryPage from "./pages/admin/HistoryPage";
+// User-facing (authenticated, any role)
+import ApplyPage from "./pages/ApplyPage";
+import ResultPage from "./pages/ResultPage";
 
-// Layout wrappers
-import AdminLayout from "./layouts/AdminLayout";
-import UserLayout from "./layouts/UserLayout";
+// Admin pages (require ROLE_ADMIN)
+import AdminLayout from "./layouts/AdminLayout";       // your existing admin shell/nav
+import DashboardPage from "./pages/DashboardPage";
+import ApplicantsPage from "./pages/ApplicantsPage";
+import TrendsPage from "./pages/TrendsPage";
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <AuthProvider>
       <BrowserRouter>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "var(--bg-card)",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border)",
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: "0.9rem",
-            },
-          }}
-        />
-
         <Routes>
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/apply" replace />} />
+          {/* ── Public ───────────────────────────────────────── */}
+          <Route path="/login" element={<LoginPage />} />
 
-          {/* ── User routes (no sidebar) ── */}
-          <Route element={<UserLayout />}>
-            <Route path="/apply" element={<ApplyForm />} />
-            <Route path="/my-history" element={<MyHistory />} />
+          {/* ── Any authenticated user ───────────────────────── */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/apply" element={<ApplyPage />} />
+            <Route path="/result/:id" element={<ResultPage />} />
           </Route>
 
-          {/* ── Admin routes (with sidebar) ── */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="evaluate" element={<EvaluatePage />} />
-            <Route path="history" element={<HistoryPage />} />
+          {/* ── Admin only ───────────────────────────────────── */}
+          <Route element={<PrivateRoute requiredRole="ROLE_ADMIN" />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="applicants" element={<ApplicantsPage />} />
+              <Route path="trends" element={<TrendsPage />} />
+            </Route>
           </Route>
 
-          {/* 404 fallback */}
-          <Route path="*" element={<Navigate to="/apply" replace />} />
+          {/* ── Fallback ─────────────────────────────────────── */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
-    </ThemeProvider>
+    </AuthProvider>
   );
 }
