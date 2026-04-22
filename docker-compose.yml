@@ -1,0 +1,91 @@
+version: "3.9"
+
+networks:
+  loanlens-net:
+    driver: bridge
+
+volumes:
+  pg-data:
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: loanlens-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       loanlens
+      POSTGRES_USER:     loanlens
+      POSTGRES_PASSWORD: loanlens
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - loanlens-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loanlens -d loanlens"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: loanlens-ml
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - loanlens-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: loanlens-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL:      jdbc:postgresql://db:5432/loanlens
+      SPRING_DATASOURCE_USERNAME: loanlens
+      SPRING_DATASOURCE_PASSWORD: loanlens
+      ML_SERVICE_URL:             http://ml-service:8000
+      JWT_SECRET:                 ${JWT_SECRET:-changeme_replace_in_production_min32chars}
+    networks:
+      - loanlens-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: node:20-alpine
+    container_name: loanlens-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host"
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8081
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - loanlens-net

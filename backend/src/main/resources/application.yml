@@ -1,3 +1,9 @@
+# ============================================================
+# FILE 2 OF 8 — Item 5: JWT Auth
+# LOCATION: /Users/parth/IdeaProjects/LoanLens/backend/src/main/resources/application.yml
+# CHANGE: Added jwt section at the bottom (marked ← ADDED)
+# ============================================================
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/loanlens
@@ -18,8 +24,14 @@ server:
 ml:
   service:
     url: http://localhost:8000
+
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+# ← ADDED: JWT configuration
+jwt:
+  secret: loanlens-super-secret-key-for-jwt-signing-must-be-at-least-256-bits-long
+  expiration-ms: 86400000   # 24 hours in milliseconds

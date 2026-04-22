@@ -1,0 +1,18 @@
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "frontend/dist"
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://loanlens-backend.onrender.com/api/:splat"
+  status = 200
+  force  = true
+
+[build.environment]
+  NODE_VERSION = "20"

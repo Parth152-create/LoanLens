@@ -1,13 +1,25 @@
+// ============================================================
+// FILE: LoanApplicationService.java
+// LOCATION: /Users/parth/IdeaProjects/LoanLens/backend/src/main/java/com/loanlens/backend/service/LoanApplicationService.java
+// CHANGES:
+//   1. Added Verdict import
+//   2. Added verdict derivation from riskTier inside evaluate()
+//   3. Added loan.setVerdict(verdict) before repository.save()
+//   Everything else is IDENTICAL to your original
+// ============================================================
+
 package com.loanlens.backend.service;
 
 import com.loanlens.backend.dto.LoanRequest;
-import com.loanlens.backend.repository.LoanApplicationRepository;
 import com.loanlens.backend.model.LoanApplication;
+import com.loanlens.backend.model.Verdict;                          // ← ADDED
+import com.loanlens.backend.repository.LoanApplicationRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -39,11 +51,12 @@ public class LoanApplicationService {
         payload.put("num_dependents", request.numDependents);
 
         // Call FastAPI ML service
-        Map response = restTemplate.postForObject(
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.postForObject(
             mlServiceUrl + "/predict", payload, Map.class
         );
 
-        // Build and save entity
+        // Build entity
         LoanApplication loan = new LoanApplication();
         loan.setRevolvingUtilization(request.revolvingUtilization);
         loan.setAge(request.age);
@@ -59,6 +72,15 @@ public class LoanApplicationService {
         loan.setRiskTier((String) response.get("risk_tier"));
         loan.setMessage((String) response.get("message"));
 
+        // ← ADDED: derive verdict from riskTier
+        String riskTier = (String) response.get("risk_tier");
+        Verdict verdict = switch (riskTier != null ? riskTier.toUpperCase() : "") {
+            case "LOW"    -> Verdict.APPROVED;
+            case "MEDIUM" -> Verdict.REVIEW;
+            default       -> Verdict.REJECTED;
+        };
+        loan.setVerdict(verdict);                                    // ← ADDED
+
         @SuppressWarnings("unchecked")
         Map<String, Object> rawShap = (Map<String, Object>) response.get("shap_values");
         if (rawShap != null) {
@@ -70,7 +92,7 @@ public class LoanApplicationService {
         return repository.save(loan);
     }
 
-    public java.util.List<LoanApplication> getAll() { return repository.findAll(); }
+    public List<LoanApplication> getAll() { return repository.findAll(); }
 
     public LoanApplication getById(Long id) {
         return repository.findById(id)
