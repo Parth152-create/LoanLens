@@ -162,7 +162,7 @@ export default function HistoryPage() {
         className="flex items-end justify-between gap-4 flex-wrap"
       >
         <div>
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+          <h1 style={{ fontFamily: "'Times New Roman', serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
             Application History
           </h1>
           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
@@ -246,7 +246,7 @@ export default function HistoryPage() {
                         borderRadius: 20,
                         fontSize: "0.72rem",
                         fontWeight: 600,
-                        fontFamily: "'DM Sans', sans-serif",
+                        fontFamily: "Arial, sans-serif",
                         cursor: "pointer",
                         border: `1px solid ${isActive ? c.border : "var(--ll-border)"}`,
                         background: isActive ? c.bg : "transparent",
@@ -274,7 +274,7 @@ export default function HistoryPage() {
                     fontSize: "0.82rem",
                     padding: "0.3rem 0.6rem",
                     cursor: "pointer",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "Arial, sans-serif",
                   }}
                 >
                   {PAGE_SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
@@ -299,7 +299,7 @@ export default function HistoryPage() {
             <span>{error}</span>
             <button
               onClick={fetchData}
-              style={{ marginLeft: "auto", background: "#ef4444", color: "#fff", border: "none", borderRadius: 6, padding: "0.28rem 0.65rem", fontSize: "0.78rem", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+              style={{ marginLeft: "auto", background: "#ef4444", color: "#fff", border: "none", borderRadius: 6, padding: "0.28rem 0.65rem", fontSize: "0.78rem", cursor: "pointer", fontFamily: "Arial, sans-serif" }}
             >
               Retry
             </button>
@@ -377,7 +377,7 @@ export default function HistoryPage() {
                       style={{ borderColor: "var(--ll-border)" }}
                       className="hover:bg-white/[0.03] transition-colors"
                     >
-                      <TableCell style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.78rem", color: "var(--accent-1)", fontWeight: 600 }}>
+                      <TableCell style={{ fontFamily: "'Courier New', monospace", fontSize: "0.78rem", color: "var(--accent-1)", fontWeight: 600 }}>
                         #{row.id}
                       </TableCell>
                       <TableCell style={{ color: "var(--text-primary)" }}>{row.age ?? "—"}</TableCell>
@@ -400,7 +400,7 @@ export default function HistoryPage() {
                               }}
                             />
                           </div>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 600, color: row.defaultProbability > 0.6 ? "#ef4444" : row.defaultProbability > 0.35 ? "#f59e0b" : "#10b981" }}>
+                          <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.8rem", fontWeight: 600, color: row.defaultProbability > 0.6 ? "#ef4444" : row.defaultProbability > 0.35 ? "#f59e0b" : "#10b981" }}>
                             {fmt.percent(row.defaultProbability)}
                           </span>
                         </div>
@@ -473,7 +473,7 @@ const pageBtnStyle = (active) => ({
   background: active ? "rgba(14,165,233,0.15)" : "transparent",
   color: active ? "var(--accent-1)" : "var(--text-secondary)",
   fontSize: "0.82rem",
-  fontFamily: "'DM Sans', sans-serif",
+  fontFamily: "Arial, sans-serif",
   cursor: "pointer",
   display: "inline-flex",
   alignItems: "center",

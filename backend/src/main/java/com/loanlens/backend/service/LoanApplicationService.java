@@ -1,20 +1,12 @@
-// ============================================================
-// FILE: LoanApplicationService.java
-// LOCATION: /Users/parth/IdeaProjects/LoanLens/backend/src/main/java/com/loanlens/backend/service/LoanApplicationService.java
-// CHANGES:
-//   1. Added Verdict import
-//   2. Added verdict derivation from riskTier inside evaluate()
-//   3. Added loan.setVerdict(verdict) before repository.save()
-//   Everything else is IDENTICAL to your original
-// ============================================================
-
 package com.loanlens.backend.service;
 
 import com.loanlens.backend.dto.LoanRequest;
 import com.loanlens.backend.model.LoanApplication;
-import com.loanlens.backend.model.Verdict;                          // ← ADDED
+import com.loanlens.backend.model.Verdict;
 import com.loanlens.backend.repository.LoanApplicationRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -72,14 +64,14 @@ public class LoanApplicationService {
         loan.setRiskTier((String) response.get("risk_tier"));
         loan.setMessage((String) response.get("message"));
 
-        // ← ADDED: derive verdict from riskTier
+        // Derive verdict from riskTier
         String riskTier = (String) response.get("risk_tier");
         Verdict verdict = switch (riskTier != null ? riskTier.toUpperCase() : "") {
             case "LOW"    -> Verdict.APPROVED;
             case "MEDIUM" -> Verdict.REVIEW;
             default       -> Verdict.REJECTED;
         };
-        loan.setVerdict(verdict);                                    // ← ADDED
+        loan.setVerdict(verdict);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> rawShap = (Map<String, Object>) response.get("shap_values");
@@ -92,10 +84,19 @@ public class LoanApplicationService {
         return repository.save(loan);
     }
 
-    public List<LoanApplication> getAll() { return repository.findAll(); }
+    // ── Get all (used by frontend getAll) ─────────────────────
+    public List<LoanApplication> getAll() {
+        return repository.findAll();
+    }
 
+    // ── Get by ID ─────────────────────────────────────────────
     public LoanApplication getById(Long id) {
         return repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Loan application not found: " + id));
+    }
+
+    // ── Paginated (GET /api/loans/paged) ──────────────────────
+    public Page<LoanApplication> getPaged(Pageable pageable) {
+        return repository.findAll(pageable);
     }
 }

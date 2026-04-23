@@ -60,7 +60,7 @@ function TierGroup({ tier, loans, delay }) {
           {/* Left */}
           <div className="flex items-center gap-3">
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: cfg.color, flexShrink: 0, display: "inline-block" }} />
-            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: "1rem", color: cfg.color }}>
+            <span style={{ fontFamily: "'Times New Roman', serif", fontWeight: 700, fontSize: "1rem", color: cfg.color }}>
               {cfg.label}
             </span>
             <Badge style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color, fontSize: "0.72rem", fontWeight: 700 }}>
@@ -79,7 +79,7 @@ function TierGroup({ tier, loans, delay }) {
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)" }}>
                   {label}
                 </span>
-                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: color ?? "var(--text-primary)", fontFamily: "'DM Mono', monospace" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: color ?? "var(--text-primary)", fontFamily: "'Courier New', monospace" }}>
                   {value}
                 </span>
               </div>
@@ -127,7 +127,7 @@ function TierGroup({ tier, loans, delay }) {
                           style={{ borderColor: "var(--ll-border)" }}
                           className="hover:bg-white/[0.03] transition-colors"
                         >
-                          <TableCell style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.78rem", color: cfg.color, fontWeight: 600 }}>
+                          <TableCell style={{ fontFamily: "'Courier New', monospace", fontSize: "0.78rem", color: cfg.color, fontWeight: 600 }}>
                             #{loan.id}
                           </TableCell>
                           <TableCell style={{ color: "var(--text-secondary)" }}>{loan.age ?? "—"}</TableCell>
@@ -138,7 +138,7 @@ function TierGroup({ tier, loans, delay }) {
                             {loan.debtRatio != null ? `${(loan.debtRatio * 100).toFixed(0)}%` : "—"}
                           </TableCell>
                           <TableCell>
-                            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: 700, color: prob > 0.65 ? "#ef4444" : prob > 0.35 ? "#f59e0b" : "#10b981" }}>
+                            <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.85rem", fontWeight: 700, color: prob > 0.65 ? "#ef4444" : prob > 0.35 ? "#f59e0b" : "#10b981" }}>
                               {Math.round(prob * 100)}%
                             </span>
                           </TableCell>
@@ -190,7 +190,7 @@ export default function ApplicantsPage() {
         className="flex items-end justify-between flex-wrap gap-3"
       >
         <div>
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+          <h1 style={{ fontFamily: "'Times New Roman', serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
             Applicants
           </h1>
           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
@@ -239,7 +239,7 @@ export default function ApplicantsPage() {
                       </span>
                       <Users size={15} color={cfg.color} />
                     </div>
-                    <p style={{ fontFamily: "'Syne', sans-serif", fontSize: "2rem", fontWeight: 800, color: cfg.color, margin: 0, lineHeight: 1 }}>
+                    <p style={{ fontFamily: "'Times New Roman', serif", fontSize: "2rem", fontWeight: 800, color: cfg.color, margin: 0, lineHeight: 1 }}>
                       {grouped[tier].length}
                     </p>
                   </CardContent>

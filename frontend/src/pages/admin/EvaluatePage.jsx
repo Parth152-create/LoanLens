@@ -88,7 +88,7 @@ function ShapBar({ label, score, maxAbs }) {
             ? <TrendingUp size={11} color={color} />
             : <TrendingDown size={11} color={color} />
           }
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color, fontFamily: "'DM Mono', monospace" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color, fontFamily: "'Courier New', monospace" }}>
             {isHurt ? "+" : ""}{score.toFixed(3)}
           </span>
         </div>
@@ -135,7 +135,7 @@ function ResultPanel({ result }) {
       <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, boxShadow: "var(--shadow-card)" }}>
         <CardHeader className="px-5 pt-5 pb-3" style={{ borderBottom: "1px solid var(--ll-border)" }}>
           <div className="flex items-center justify-between">
-            <CardTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+            <CardTitle style={{ fontFamily: "'Times New Roman', serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
               Risk Assessment
             </CardTitle>
             <RiskBadge tier={result.riskTier ?? "MEDIUM"} />
@@ -151,7 +151,7 @@ function ResultPanel({ result }) {
             }}
           >
             <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Decision</span>
-            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1rem", color: verdictColor }}>
+            <span style={{ fontFamily: "'Times New Roman', serif", fontWeight: 800, fontSize: "1rem", color: verdictColor }}>
               {verdict}
             </span>
           </div>
@@ -164,7 +164,7 @@ function ResultPanel({ result }) {
         <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, boxShadow: "var(--shadow-card)" }}>
           <CardHeader className="px-5 pt-5 pb-3" style={{ borderBottom: "1px solid var(--ll-border)" }}>
             <div className="flex items-center justify-between">
-              <CardTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+              <CardTitle style={{ fontFamily: "'Times New Roman', serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 Risk Drivers
               </CardTitle>
               <Badge variant="outline" style={{ borderColor: "var(--ll-border-strong)", color: "var(--text-muted)", fontSize: "0.7rem" }}>
@@ -267,7 +267,7 @@ export default function EvaluatePage() {
 
       {/* Page Title */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-        <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+        <h1 style={{ fontFamily: "'Times New Roman', serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
           Evaluate Applicant
         </h1>
         <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
@@ -289,7 +289,7 @@ export default function EvaluatePage() {
           <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, boxShadow: "var(--shadow-card)" }}>
             <CardHeader className="px-6 pt-5 pb-4" style={{ borderBottom: "1px solid var(--ll-border)" }}>
               <div className="flex items-center justify-between">
-                <CardTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                <CardTitle style={{ fontFamily: "'Times New Roman', serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
                   Applicant Details
                 </CardTitle>
                 {result && (

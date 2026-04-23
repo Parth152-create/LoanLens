@@ -85,7 +85,7 @@ function StatCard({ icon: Icon, label, value, suffix = "", color, delay = 0, loa
               suffix={suffix}
               decimals={suffix === "%" ? 1 : 0}
               style={{
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "'Times New Roman', serif",
                 fontSize: "2rem",
                 fontWeight: 800,
                 color: "var(--text-primary)",
@@ -143,7 +143,7 @@ function RecentTable({ loans, loading }) {
         <div className="flex items-center justify-between">
           <CardTitle
             style={{
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "'Times New Roman', serif",
               fontSize: "0.95rem",
               fontWeight: 700,
               color: "var(--text-primary)",
@@ -210,7 +210,7 @@ function RecentTable({ loans, loading }) {
                 >
                   <TableCell
                     style={{
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: "'Courier New', monospace",
                       fontSize: "0.78rem",
                       color: "var(--accent-1)",
                       fontWeight: 600,
@@ -229,7 +229,7 @@ function RecentTable({ loans, loading }) {
                   <TableCell>
                     <span
                       style={{
-                        fontFamily: "'DM Mono', monospace",
+                        fontFamily: "'Courier New', monospace",
                         fontSize: "0.85rem",
                         fontWeight: 700,
                         color: app.defaultProbability > 0.65
@@ -296,7 +296,7 @@ export default function Dashboard() {
       >
         <h1
           style={{
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "'Times New Roman', serif",
             fontSize: "1.7rem",
             fontWeight: 800,
             color: "var(--text-primary)",
@@ -343,7 +343,7 @@ export default function Dashboard() {
             <CardHeader className="px-5 pt-5 pb-2">
               <CardTitle
                 style={{
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "'Times New Roman', serif",
                   fontSize: "0.95rem",
                   fontWeight: 700,
                   color: "var(--text-primary)",
@@ -402,7 +402,7 @@ export default function Dashboard() {
             <CardHeader className="px-5 pt-5 pb-2">
               <CardTitle
                 style={{
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "'Times New Roman', serif",
                   fontSize: "0.95rem",
                   fontWeight: 700,
                   color: "var(--text-primary)",
@@ -425,7 +425,7 @@ export default function Dashboard() {
                         <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500 }}>
                           {label}
                         </span>
-                        <span style={{ fontSize: "0.82rem", color, fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>
+                        <span style={{ fontSize: "0.82rem", color, fontWeight: 700, fontFamily: "'Courier New', monospace" }}>
                           {count} ({pct}%)
                         </span>
                       </div>
@@ -458,7 +458,7 @@ export default function Dashboard() {
                 ) : (
                   <span
                     style={{
-                      fontFamily: "'Syne', sans-serif",
+                      fontFamily: "'Times New Roman', serif",
                       fontSize: "1.3rem",
                       fontWeight: 800,
                       color: "var(--text-primary)",

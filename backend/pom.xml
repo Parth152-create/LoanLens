@@ -100,7 +100,12 @@
                 </dependency>
                 <!-- ← ADDED end -->
 
-        </dependencies>
+            <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+    </dependencies>
 
         <build>
                 <plugins>

@@ -69,7 +69,7 @@ function StatCard({ icon: Icon, label, value, color, delay }) {
               <Icon size={16} color={color} />
             </div>
           </div>
-          <p style={{ fontFamily: "'Syne', sans-serif", fontSize: "2rem", fontWeight: 800, color: "var(--text-primary)", margin: 0, lineHeight: 1 }}>
+          <p style={{ fontFamily: "'Times New Roman', serif", fontSize: "2rem", fontWeight: 800, color: "var(--text-primary)", margin: 0, lineHeight: 1 }}>
             {value}
           </p>
         </CardContent>
@@ -121,7 +121,7 @@ export default function TrendsPage() {
 
       {/* ── Page Title ── */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-        <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+        <h1 style={{ fontFamily: "'Times New Roman', serif", fontSize: "1.7rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
           Trends
         </h1>
         <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
@@ -151,13 +151,13 @@ export default function TrendsPage() {
         <Tabs defaultValue="applications">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <TabsList style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", padding: 4 }}>
-              <TabsTrigger value="applications" style={{ fontSize: "0.82rem", fontFamily: "'DM Sans', sans-serif" }}>
+              <TabsTrigger value="applications" style={{ fontSize: "0.82rem", fontFamily: "Arial, sans-serif" }}>
                 Applications / Day
               </TabsTrigger>
-              <TabsTrigger value="probability" style={{ fontSize: "0.82rem", fontFamily: "'DM Sans', sans-serif" }}>
+              <TabsTrigger value="probability" style={{ fontSize: "0.82rem", fontFamily: "Arial, sans-serif" }}>
                 Avg Default Prob
               </TabsTrigger>
-              <TabsTrigger value="breakdown" style={{ fontSize: "0.82rem", fontFamily: "'DM Sans', sans-serif" }}>
+              <TabsTrigger value="breakdown" style={{ fontSize: "0.82rem", fontFamily: "Arial, sans-serif" }}>
                 Risk Breakdown
               </TabsTrigger>
             </TabsList>
@@ -170,7 +170,7 @@ export default function TrendsPage() {
           <TabsContent value="applications">
             <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, boxShadow: "var(--shadow-card)" }}>
               <CardHeader className="px-6 pt-5 pb-2">
-                <CardTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                <CardTitle style={{ fontFamily: "'Times New Roman', serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
                   Applications Per Day
                 </CardTitle>
               </CardHeader>
@@ -198,7 +198,7 @@ export default function TrendsPage() {
           <TabsContent value="probability">
             <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, boxShadow: "var(--shadow-card)" }}>
               <CardHeader className="px-6 pt-5 pb-2">
-                <CardTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                <CardTitle style={{ fontFamily: "'Times New Roman', serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
                   Avg Default Probability Over Time
                 </CardTitle>
               </CardHeader>
@@ -226,7 +226,7 @@ export default function TrendsPage() {
           <TabsContent value="breakdown">
             <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, boxShadow: "var(--shadow-card)" }}>
               <CardHeader className="px-6 pt-5 pb-2">
-                <CardTitle style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                <CardTitle style={{ fontFamily: "'Times New Roman', serif", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
                   Risk Tier Breakdown Over Time
                 </CardTitle>
               </CardHeader>
