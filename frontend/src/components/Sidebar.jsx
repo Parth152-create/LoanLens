@@ -1,16 +1,29 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ScanLine, History, TrendingUp, Users } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, ScanLine, History, TrendingUp, Users, LogOut } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const NAV_ITEMS = [
-  { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/admin/evaluate",  icon: ScanLine,        label: "Evaluate"  },
-  { to: "/admin/history",   icon: History,         label: "History"   },
-  { to: "/admin/trends",    icon: TrendingUp,      label: "Trends"    },
-  { to: "/admin/applicants",icon: Users,           label: "Applicants"},
+  { to: "/admin/dashboard",  icon: LayoutDashboard, label: "Dashboard"  },
+  { to: "/admin/evaluate",   icon: ScanLine,        label: "Evaluate"   },
+  { to: "/admin/history",    icon: History,         label: "History"    },
+  { to: "/admin/trends",     icon: TrendingUp,      label: "Trends"     },
+  { to: "/admin/applicants", icon: Users,           label: "Applicants" },
 ];
 
 export default function Sidebar() {
-  const { pathname } = useLocation();
+  const { pathname }    = useLocation();
+  const { user, logout } = useAuth();
+  const navigate        = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
+  const initials = user?.username
+    ? user.username.slice(0, 2).toUpperCase()
+    : "LO";
 
   return (
     <aside
@@ -21,18 +34,18 @@ export default function Sidebar() {
         width: "var(--sidebar-w)",
         height: "100vh",
         background: "var(--bg-secondary)",
-        borderRight: "1px solid var(--border)",
+        borderRight: "1px solid var(--ll-border)",
         display: "flex",
         flexDirection: "column",
         zIndex: 40,
         transition: "background var(--transition-theme), border-color var(--transition-theme)",
       }}
     >
-      {/* Logo */}
+      {/* ── Logo ── */}
       <div
         style={{
           padding: "1.25rem 1.25rem 0.75rem",
-          borderBottom: "1px solid var(--border)",
+          borderBottom: "1px solid var(--ll-border)",
           display: "flex",
           alignItems: "center",
           gap: "0.6rem",
@@ -50,7 +63,7 @@ export default function Sidebar() {
             fontSize: "0.9rem",
             fontWeight: 800,
             color: "#fff",
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "'Times New Roman', serif",
             flexShrink: 0,
           }}
         >
@@ -59,7 +72,7 @@ export default function Sidebar() {
         <div>
           <p
             style={{
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "'Times New Roman', serif",
               fontWeight: 800,
               fontSize: "0.95rem",
               color: "var(--text-primary)",
@@ -77,6 +90,7 @@ export default function Sidebar() {
               fontWeight: 500,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
+              fontFamily: "Arial, sans-serif",
             }}
           >
             Admin Portal
@@ -84,8 +98,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Nav items */}
-      <nav style={{ flex: 1, padding: "0.75rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+      {/* ── Nav items ── */}
+      <nav style={{ flex: 1, padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
         <p
           style={{
             fontSize: "0.65rem",
@@ -95,6 +109,7 @@ export default function Sidebar() {
             color: "var(--text-muted)",
             padding: "0.5rem 0.5rem 0.35rem",
             margin: 0,
+            fontFamily: "Arial, sans-serif",
           }}
         >
           Navigation
@@ -115,6 +130,7 @@ export default function Sidebar() {
                 borderRadius: 10,
                 fontSize: "0.88rem",
                 fontWeight: active ? 600 : 500,
+                fontFamily: "Arial, sans-serif",
                 color: active ? "var(--accent-1)" : "var(--text-secondary)",
                 background: active ? "rgba(14, 165, 233, 0.1)" : "transparent",
                 border: active ? "1px solid rgba(14, 165, 233, 0.2)" : "1px solid transparent",
@@ -123,8 +139,6 @@ export default function Sidebar() {
             >
               <Icon size={16} strokeWidth={active ? 2.2 : 1.8} />
               {label}
-
-              {/* Active dot */}
               {active && (
                 <span
                   style={{
@@ -141,11 +155,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* User profile at bottom */}
+      {/* ── User profile + logout ── */}
       <div
         style={{
           padding: "0.85rem 1rem",
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid var(--ll-border)",
           display: "flex",
           alignItems: "center",
           gap: "0.65rem",
@@ -166,12 +180,14 @@ export default function Sidebar() {
             fontWeight: 700,
             color: "#fff",
             flexShrink: 0,
+            fontFamily: "Arial, sans-serif",
           }}
         >
-          LO
+          {initials}
         </div>
 
-        <div style={{ minWidth: 0 }}>
+        {/* Username */}
+        <div style={{ minWidth: 0, flex: 1 }}>
           <p
             style={{
               fontSize: "0.82rem",
@@ -181,14 +197,50 @@ export default function Sidebar() {
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              fontFamily: "Arial, sans-serif",
             }}
           >
-            Loan Officer
+            {user?.username ?? "Admin"}
           </p>
-          <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", margin: 0 }}>
+          <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", margin: 0, fontFamily: "Arial, sans-serif" }}>
             Admin
           </p>
         </div>
+
+        {/* Logout button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleLogout}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "0.35rem",
+                borderRadius: 8,
+                color: "var(--text-muted)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "color 0.2s, background 0.2s",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#ef4444";
+                e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--text-muted)";
+                e.currentTarget.style.background = "none";
+              }}
+            >
+              <LogOut size={15} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", color: "var(--text-primary)", fontSize: "0.78rem" }}>
+            Logout
+          </TooltipContent>
+        </Tooltip>
       </div>
     </aside>
   );

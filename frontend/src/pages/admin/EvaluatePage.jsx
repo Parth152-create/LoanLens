@@ -155,6 +155,47 @@ function ResultPanel({ result }) {
               {verdict}
             </span>
           </div>
+
+          {/* Confidence score */}
+          {result.confidence && (
+            <div className="flex items-center justify-between mb-4 px-4 py-3 rounded-xl"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--ll-border)" }}
+            >
+              <div>
+                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: 2 }}>
+                  Model Confidence
+                </span>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                  How certain the model is about this prediction
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Confidence bar */}
+                <div style={{ width: 60, height: 6, borderRadius: 99, background: "var(--ll-border)", overflow: "hidden" }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.round((result.confidenceScore ?? 0) * 100)}%` }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      height: "100%",
+                      borderRadius: 99,
+                      background: result.confidence === "HIGH" ? "#10b981" : result.confidence === "MEDIUM" ? "#f59e0b" : "#ef4444",
+                    }}
+                  />
+                </div>
+                <Badge style={{
+                  background: result.confidence === "HIGH" ? "rgba(16,185,129,0.12)" : result.confidence === "MEDIUM" ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)",
+                  border: `1px solid ${result.confidence === "HIGH" ? "rgba(16,185,129,0.3)" : result.confidence === "MEDIUM" ? "rgba(245,158,11,0.3)" : "rgba(239,68,68,0.3)"}`,
+                  color: result.confidence === "HIGH" ? "#10b981" : result.confidence === "MEDIUM" ? "#f59e0b" : "#ef4444",
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                }}>
+                  {result.confidence}
+                </Badge>
+              </div>
+            </div>
+          )}
+
           <ProbabilityMeter probability={result.probability} />
         </CardContent>
       </Card>
@@ -248,7 +289,13 @@ export default function EvaluatePage() {
         predict(features),
         submitLoanApplication(loanReq).catch(() => null),
       ]);
-      setResult(prediction);
+      setResult({
+        probability:     prediction.default_probability,
+        riskTier:        prediction.risk_tier,
+        shapValues:      prediction.shap_values,
+        confidence:      prediction.confidence,
+        confidenceScore: prediction.confidence_score,
+      });
       toast.success("Evaluation complete");
     } catch (err) {
       toast.error(err.message || "Evaluation failed");

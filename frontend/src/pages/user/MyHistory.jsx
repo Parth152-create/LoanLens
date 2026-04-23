@@ -1,45 +1,23 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { FileText, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import toast from "react-hot-toast";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 
 import VerdictChip from "../../components/VerdictChip";
 import RiskBadge from "../../components/RiskBadge";
 import ProbabilityMeter from "../../components/ProbabilityMeter";
 import { getAllLoans } from "../../services/loanService";
 
-// ─── Skeleton row ─────────────────────────────────────────────
-function SkeletonRow() {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "60px 1fr 1fr 1fr 120px",
-        alignItems: "center",
-        gap: "1rem",
-        padding: "0.9rem 1.25rem",
-        borderBottom: "1px solid var(--border)",
-      }}
-    >
-      {[80, 120, 100, 90, 100].map((w, i) => (
-        <div
-          key={i}
-          style={{
-            height: 14,
-            width: w,
-            borderRadius: 6,
-            background: "var(--border)",
-            opacity: 0.6,
-            animation: "ll-pulse 1.5s ease-in-out infinite",
-            animationDelay: `${i * 0.1}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Expanded detail panel ────────────────────────────────────
+// ─── Detail Panel ─────────────────────────────────────────────
 function DetailPanel({ app }) {
   return (
     <motion.div
@@ -50,66 +28,36 @@ function DetailPanel({ app }) {
       style={{ overflow: "hidden" }}
     >
       <div
+        className="grid gap-6 px-6 py-5"
         style={{
-          padding: "1.25rem 1.5rem",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--bg-surface)",
-          display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: "1.5rem",
+          background: "var(--bg-surface)",
+          borderTop: "1px solid var(--ll-border)",
         }}
       >
-        {/* Left: probability meter */}
+        {/* Probability meter */}
         <div>
-          <p
-            style={{
-              fontSize: "0.68rem",
-              fontWeight: 700,
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: "var(--text-muted)",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
             Default Probability
           </p>
-          <ProbabilityMeter probability={app.probability ?? 0} />
+          <ProbabilityMeter probability={app.defaultProbability ?? 0} />
         </div>
 
-        {/* Right: field breakdown */}
+        {/* Details grid */}
         <div>
-          <p
-            style={{
-              fontSize: "0.68rem",
-              fontWeight: 700,
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: "var(--text-muted)",
-              marginBottom: "0.75rem",
-            }}
-          >
+          <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
             Application Details
           </p>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "0.5rem 1rem",
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem 1rem" }}>
             {[
-              ["Age",            app.age],
-              ["Dependents",     app.dependents],
+              ["Age",          app.age],
               ["Monthly Income", app.monthlyIncome ? `$${Number(app.monthlyIncome).toLocaleString()}` : "—"],
-              ["Debt Ratio",     app.debtRatio != null ? (app.debtRatio * 100).toFixed(0) + "%" : "—"],
-              ["Utilization",    app.revolvingUtilization != null ? (app.revolvingUtilization * 100).toFixed(0) + "%" : "—"],
-              ["Credit Lines",   app.openCreditLines],
+              ["Debt Ratio",   app.debtRatio != null ? (app.debtRatio * 100).toFixed(0) + "%" : "—"],
+              ["Utilization",  app.revolvingUtilization != null ? (app.revolvingUtilization * 100).toFixed(0) + "%" : "—"],
             ].map(([label, value]) => (
               <div key={label}>
                 <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", margin: 0 }}>{label}</p>
-                <p style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-                  {value ?? "—"}
-                </p>
+                <p style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{value ?? "—"}</p>
               </div>
             ))}
           </div>
@@ -119,14 +67,13 @@ function DetailPanel({ app }) {
   );
 }
 
-// ─── Single application row ───────────────────────────────────
+// ─── App Row ──────────────────────────────────────────────────
 function AppRow({ app, index }) {
   const [expanded, setExpanded] = useState(false);
+  const prob = app.defaultProbability ?? 0;
 
   const date = app.createdAt
-    ? new Date(app.createdAt).toLocaleDateString("en-US", {
-        month: "short", day: "numeric", year: "numeric",
-      })
+    ? new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "—";
 
   return (
@@ -135,115 +82,54 @@ function AppRow({ app, index }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      {/* Row */}
-      <div
+      <TableRow
         onClick={() => setExpanded((p) => !p)}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "60px 1fr 1fr 1fr 140px",
-          alignItems: "center",
-          gap: "1rem",
-          padding: "0.9rem 1.25rem",
-          borderBottom: expanded ? "none" : "1px solid var(--border)",
-          cursor: "pointer",
-          transition: "background 0.15s",
-          background: expanded ? "var(--bg-surface)" : "transparent",
-        }}
-        onMouseEnter={(e) => {
-          if (!expanded) e.currentTarget.style.background = "var(--bg-card-hover)";
-        }}
-        onMouseLeave={(e) => {
-          if (!expanded) e.currentTarget.style.background = "transparent";
-        }}
+        style={{ borderColor: "var(--ll-border)", cursor: "pointer" }}
+        className="hover:bg-white/[0.03] transition-colors"
       >
-        {/* ID */}
-        <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)" }}>
+        <TableCell style={{ fontFamily: "'Courier New', monospace", fontSize: "0.78rem", color: "var(--accent-1)", fontWeight: 600 }}>
           #{app.id}
-        </span>
-
-        {/* Date */}
-        <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{date}</span>
-
-        {/* Probability */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <div
-            style={{
-              width: 60,
-              height: 6,
-              borderRadius: 99,
-              background: "var(--border)",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
+        </TableCell>
+        <TableCell style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{date}</TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <div style={{ width: 60, height: 6, borderRadius: 99, background: "var(--ll-border)", overflow: "hidden" }}>
+              <div style={{
                 height: "100%",
-                width: `${Math.round((app.probability ?? 0) * 100)}%`,
-                background:
-                  (app.probability ?? 0) < 0.35
-                    ? "linear-gradient(90deg,#10b981,#34d399)"
-                    : (app.probability ?? 0) < 0.65
-                    ? "linear-gradient(90deg,#f59e0b,#fbbf24)"
-                    : "linear-gradient(90deg,#ef4444,#f97316)",
+                width: `${Math.round(prob * 100)}%`,
                 borderRadius: 99,
-              }}
-            />
+                background: prob < 0.35 ? "linear-gradient(90deg,#10b981,#34d399)" : prob < 0.65 ? "linear-gradient(90deg,#f59e0b,#fbbf24)" : "linear-gradient(90deg,#ef4444,#f97316)",
+              }} />
+            </div>
+            <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.82rem", color: prob > 0.65 ? "#ef4444" : prob > 0.35 ? "#f59e0b" : "#10b981", fontWeight: 600 }}>
+              {prob != null ? Math.round(prob * 100) + "%" : "—"}
+            </span>
           </div>
-          <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", minWidth: 32 }}>
-            {app.probability != null ? Math.round(app.probability * 100) + "%" : "—"}
+        </TableCell>
+        <TableCell><RiskBadge tier={app.riskTier ?? "MEDIUM"} size="sm" /></TableCell>
+        <TableCell><VerdictChip probability={prob} /></TableCell>
+        <TableCell>
+          <span style={{ color: "var(--text-muted)" }}>
+            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </span>
-        </div>
+        </TableCell>
+      </TableRow>
 
-        {/* Risk badge */}
-        <RiskBadge tier={app.riskTier ?? "MEDIUM"} size="sm" />
-
-        {/* Verdict */}
-        <VerdictChip probability={app.probability ?? 0.5} />
-      </div>
-
-      {/* Expandable detail */}
-      {expanded && <DetailPanel app={app} />}
+      {/* Expandable row */}
+      {expanded && (
+        <tr>
+          <td colSpan={6} style={{ padding: 0 }}>
+            <AnimatePresence>
+              <DetailPanel app={app} />
+            </AnimatePresence>
+          </td>
+        </tr>
+      )}
     </motion.div>
   );
 }
 
-// ─── Empty state ──────────────────────────────────────────────
-function EmptyState() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "4rem 1rem",
-        gap: "0.75rem",
-      }}
-    >
-      <div
-        style={{
-          width: 52,
-          height: 52,
-          borderRadius: 14,
-          background: "var(--border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <FileText size={22} color="var(--text-muted)" />
-      </div>
-      <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-        No applications yet
-      </p>
-      <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
-        Submit your first application to see it here.
-      </p>
-    </div>
-  );
-}
-
-// ─── Main page ────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────
 export default function MyHistory() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -252,11 +138,10 @@ export default function MyHistory() {
   const fetchApps = async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
-
     try {
       const data = await getAllLoans();
       setApplications(Array.isArray(data) ? data : []);
-    } catch (err) {
+    } catch {
       toast.error("Couldn't load applications.");
     } finally {
       setLoading(false);
@@ -267,101 +152,89 @@ export default function MyHistory() {
   useEffect(() => { fetchApps(); }, []);
 
   return (
-    <div style={{ paddingTop: "1rem" }}>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "1.25rem",
-        }}
-      >
+    <div style={{ paddingTop: "1rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
+      {/* ── Header ── */}
+      <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: "1.5rem",
-              fontWeight: 800,
-              color: "var(--text-primary)",
-              margin: 0,
-            }}
-          >
+          <h1 style={{ fontFamily: "'Times New Roman', serif", fontSize: "1.6rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
             My Applications
           </h1>
-          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0.2rem 0 0" }}>
-            {applications.length > 0
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 4 }}>
+            {loading ? "Loading…" : applications.length > 0
               ? `${applications.length} application${applications.length > 1 ? "s" : ""} found`
               : "Your loan history"}
           </p>
         </div>
-
-        {/* Refresh button */}
-        <button
-          className="ll-btn-ghost"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => fetchApps(true)}
           disabled={refreshing}
-          style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem 1rem" }}
+          style={{ borderColor: "var(--ll-border-strong)", color: "var(--text-secondary)", background: "transparent", fontSize: "0.8rem" }}
         >
-          <RefreshCw
-            size={14}
-            style={{
-              transition: "transform 0.5s",
-              transform: refreshing ? "rotate(360deg)" : "rotate(0deg)",
-            }}
-          />
+          <RefreshCw size={13} className={`mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
           Refresh
-        </button>
+        </Button>
       </div>
 
-      {/* Table card */}
-      <div className="ll-card" style={{ overflow: "hidden", padding: 0 }}>
-        {/* Table header */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "60px 1fr 1fr 1fr 140px",
-            gap: "1rem",
-            padding: "0.65rem 1.25rem",
-            borderBottom: "1px solid var(--border)",
-            background: "var(--bg-surface)",
-          }}
-        >
-          {["ID", "Date", "Probability", "Risk", "Verdict"].map((h) => (
-            <span
-              key={h}
-              style={{
-                fontSize: "0.68rem",
-                fontWeight: 700,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-muted)",
-              }}
-            >
-              {h}
-            </span>
+      {/* ── Summary Cards ── */}
+      {!loading && applications.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+          {[
+            { label: "Total",    value: applications.length,                                                             color: "#0ea5e9" },
+            { label: "Approved", value: applications.filter(a => a.riskTier === "LOW").length,                           color: "#10b981" },
+            { label: "Rejected", value: applications.filter(a => a.riskTier === "HIGH" || a.riskTier === "MEDIUM").length, color: "#f59e0b" },
+          ].map(({ label, value, color }) => (
+            <Card key={label} style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 14 }}>
+              <CardContent className="p-4">
+                <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", margin: "0 0 6px" }}>{label}</p>
+                <p style={{ fontFamily: "'Times New Roman', serif", fontSize: "1.8rem", fontWeight: 800, color, margin: 0, lineHeight: 1 }}>{value}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
+      )}
 
-        {/* Rows */}
+      {/* ── Table Card ── */}
+      <Card style={{ background: "var(--bg-card)", border: "1px solid var(--ll-border)", borderRadius: 16, overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+          <CardContent className="p-6">
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" style={{ background: "var(--ll-border)" }} />
+              ))}
+            </div>
+          </CardContent>
         ) : applications.length === 0 ? (
-          <EmptyState />
+          <CardContent className="p-0">
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div style={{ width: 52, height: 52, borderRadius: 14, background: "var(--ll-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FileText size={22} color="var(--text-muted)" />
+              </div>
+              <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>No applications yet</p>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>Submit your first application to see it here.</p>
+            </div>
+          </CardContent>
         ) : (
-          applications.map((app, i) => (
-            <AppRow key={app.id} app={app} index={i} />
-          ))
+          <Table>
+            <TableHeader>
+              <TableRow style={{ borderColor: "var(--ll-border)", background: "rgba(255,255,255,0.02)" }}>
+                {["ID", "Date", "Probability", "Risk", "Verdict", ""].map((h) => (
+                  <TableHead key={h} style={{ color: "var(--text-muted)", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                    {h}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map((app, i) => (
+                <AppRow key={app.id} app={app} index={i} />
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </div>
-
-      {/* Pulse keyframe */}
-      <style>{`
-        @keyframes ll-pulse {
-          0%, 100% { opacity: 0.6; }
-          50%       { opacity: 0.3; }
-        }
-      `}</style>
+      </Card>
     </div>
   );
 }
